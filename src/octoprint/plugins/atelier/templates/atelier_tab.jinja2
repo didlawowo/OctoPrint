@@ -132,7 +132,9 @@
             </div>
             <div class="atelier-camera-frame">
                 <!-- ko if: cameraSource -->
-                <img alt="Vue en direct de l’imprimante" width="640" height="400"
+                <img alt="Vue en direct de l’imprimante"
+                     width="640"
+                     height="400"
                      data-test-id="atelier-camera-stream"
                      data-bind="attr: {src: cameraSource}, style: {transform: cameraTransform}, event: {error: cameraFailed}">
                 <!-- /ko -->
