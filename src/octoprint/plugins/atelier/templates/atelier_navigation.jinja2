@@ -1,0 +1,14 @@
+<div id="atelier-navigation" data-bind="visible: enabled" style="display: none">
+    <nav class="atelier-nav" aria-label="Navigation principale">
+        <a class="atelier-nav-brand" href="#" data-bind="click: function(){ navigate('home'); }"><img src="{{ url_for('static', filename='img/tentacle-32x32.png') }}" alt=""> <span>OctoPrint<small>ATELIER</small></span></a>
+        <button type="button" data-test-id="atelier-nav-home" data-bind="click: function(){ navigate('home'); }, css: {active: section() === 'home'}, attr: {'aria-current': section() === 'home' ? 'page' : null}"><i class="fas fa-home" aria-hidden="true"></i><span>Accueil</span></button>
+        <button type="button" data-test-id="atelier-nav-control" data-bind="click: function(){ navigate('control'); }, css: {active: section() === 'control'}, attr: {'aria-current': section() === 'control' ? 'page' : null}"><i class="fas fa-sliders-h" aria-hidden="true"></i><span>Contrôle</span></button>
+        <button type="button" data-test-id="atelier-nav-files" data-bind="click: function(){ navigate('files'); }, css: {active: section() === 'files'}, attr: {'aria-current': section() === 'files' ? 'page' : null}"><i class="far fa-folder-open" aria-hidden="true"></i><span>Fichiers</span></button>
+        <button type="button" data-test-id="atelier-nav-camera" data-bind="click: function(){ navigate('camera'); }, css: {active: section() === 'camera'}, attr: {'aria-current': section() === 'camera' ? 'page' : null}"><i class="fas fa-camera" aria-hidden="true"></i><span>Caméra</span></button>
+        <button type="button" data-test-id="atelier-nav-advanced" data-bind="click: function(){ navigate('advanced'); }, css: {active: section() === 'advanced'}, attr: {'aria-current': section() === 'advanced' ? 'page' : null}"><i class="fas fa-ellipsis-h" aria-hidden="true"></i><span>Plus</span></button>
+        <div class="atelier-nav-footer"><span data-bind="text: statusLabel"></span><button type="button" data-bind="click: classic">Interface classique</button></div>
+    </nav>
+    <div class="atelier-mobile-classic"><button type="button" data-bind="click: classic">Interface classique</button></div>
+    <div class="atelier-connection-backdrop" data-bind="click: closeConnection"></div>
+    <button id="atelier-close-connection" type="button" class="atelier-button" data-bind="click: closeConnection">Fermer la connexion <i class="fas fa-times" aria-hidden="true"></i></button>
+</div>

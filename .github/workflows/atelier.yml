@@ -1,0 +1,44 @@
+name: Atelier
+on:
+  pull_request:
+  push:
+    branches: [feat/atelier-mobile-tablet]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: atelier-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  test:
+    if: github.repository == 'didlawowo/OctoPrint'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Unit tests and script syntax (no hardware)
+        run: |
+          python -m unittest discover -s tests/atelier -p 'test_*.py' -v
+          node --test tests/atelier/atelier.test.cjs
+          bash -n tools/pi/01-install-fork
+      - name: Install fork and browser tests
+        run: |
+          python -m pip install -e . go-task-bin
+          task --list
+          task pi:test
+          cd tests/playwright
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: Prepare isolated OctoPrint test data
+        run: |
+          cp -a .github/ci/e2econfig "$RUNNER_TEMP/atelier-e2e"
+          echo "OCTOPRINT_SERVER_BASE=$RUNNER_TEMP/atelier-e2e" >> "$GITHUB_ENV"
+      - name: Browser recipe, mobile and tablet
+        working-directory: tests/playwright
+        run: npx playwright test specs/atelier.spec.js --project=chromium --workers=1

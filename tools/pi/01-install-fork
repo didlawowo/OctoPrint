@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+# Executed INSIDE the CustoPiZer image chroot, never on the host.
+set -eo pipefail
+export LC_ALL=C
+source /common.sh
+install_cleanup_trap
+
+venv=/home/pi/oprint
+[[ -x "$venv/bin/python" ]] || { echo 'Image incompatible : venv OctoPi absent.' >&2; exit 1; }
+"$venv/bin/python" -c 'import sys; assert sys.version_info >= (3, 10), "OctoPrint dev requiert Python >= 3.10"'
+work=$(mktemp -d /tmp/atelier-build.XXXXXX)
+tar -xf /files/source.tar -C "$work"
+chown -R pi:pi "$work"
+source_dir="$work/source"
+
+# The fork's French catalogue must be in the installed package, not only in translations/.
+sudo -u pi "$venv/bin/pybabel" compile -d "$source_dir/translations" -l fr
+mkdir -p "$source_dir/src/octoprint/translations/fr"
+cp -a "$source_dir/translations/fr/." "$source_dir/src/octoprint/translations/fr/"
+chown -R pi:pi "$work"
+sudo -u pi "$venv/bin/python" -m pip install --no-cache-dir --upgrade "$source_dir"
+
+# Preserve wizard, accounts, authentication, serial and webcam settings.
+sudo -u pi "$venv/bin/python" - <<'PYCONFIG'
+from pathlib import Path
+import yaml
+path = Path('/home/pi/.octoprint/config.yaml')
+config = yaml.safe_load(path.read_text()) if path.exists() else {}
+config = config or {}
+config.setdefault('appearance', {})['defaultLanguage'] = 'fr'
+config.setdefault('feature', {})['printStartConfirmation'] = True
+config['feature']['printCancelConfirmation'] = True
+path.parent.mkdir(parents=True, exist_ok=True)
+path.write_text(yaml.safe_dump(config, allow_unicode=True), encoding='utf-8')
+PYCONFIG
+sudo -u pi "$venv/bin/python" - <<'PYCHECK'
+from importlib.resources import files
+import octoprint
+root = files('octoprint')
+for name in ('plugins/atelier/static/js/atelier.js',
+             'plugins/atelier/static/css/atelier.css',
+             'plugins/atelier/templates/atelier_tab.jinja2',
+             'translations/fr/LC_MESSAGES/messages.mo'):
+    assert root.joinpath(name).is_file(), 'Fichier absent du package : ' + name
+print('Fork installé :', octoprint.__version__)
+PYCHECK
+"$venv/bin/python" -m pip check
+rm -rf -- "$work"

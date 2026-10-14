@@ -2,9 +2,15 @@
 
 version: "3"
 
-env:
+includes:
+  pi:
+    taskfile: ./tools/pi/Taskfile.yml
+    dir: .
+
+vars:
   LOCALES:
     - de
+    - fr
 
 tasks:
   install:

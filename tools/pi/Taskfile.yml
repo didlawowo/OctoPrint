@@ -1,0 +1,48 @@
+version: '3'
+
+vars:
+  IMAGE: build/atelier-pi/octopi-atelier.img
+
+tasks:
+  prepare:
+    desc: Vérifier les prérequis du build SD (Linux x86_64, Docker, Git, 20 Gio)
+    cmds:
+      - python3 tools/pi/image.py prepare
+  build:
+    desc: Construire une vraie image OctoPi contenant le commit courant et la traduction FR
+    cmds:
+      - python3 tools/pi/image.py build
+  flash:
+    desc: Ouvrir l’image dans Raspberry Pi Imager pour configurer et flasher la SD
+    env:
+      ATELIER_IMAGE: '{{.IMAGE}}'
+    cmds:
+      - python3 tools/pi/image.py imager --image "$ATELIER_IMAGE"
+  devices:
+    desc: Lister les disques Linux et leurs partitions (lecture seule)
+    cmds:
+      - python3 tools/pi/sdcard.py --list
+  flash-check:
+    desc: Vérifier une cible de flash brut Linux sans écrire (DEVICE obligatoire)
+    requires:
+      vars: [DEVICE]
+    env:
+      ATELIER_IMAGE: '{{.IMAGE}}'
+      ATELIER_DEVICE: '{{.DEVICE}}'
+    cmds:
+      - python3 tools/pi/sdcard.py --image "$ATELIER_IMAGE" --device "$ATELIER_DEVICE" --dry-run
+  flash-cli:
+    desc: Flash brut Linux interactif, destructif, avec vérification intégrale (DEVICE obligatoire)
+    requires:
+      vars: [DEVICE]
+    env:
+      ATELIER_IMAGE: '{{.IMAGE}}'
+      ATELIER_DEVICE: '{{.DEVICE}}'
+    cmds:
+      - sudo -- python3 tools/pi/sdcard.py --image "$ATELIER_IMAGE" --device "$ATELIER_DEVICE"
+  test:
+    desc: Tests des protections SD et du tableau de bord (aucun matériel requis)
+    cmds:
+      - python3 -m unittest discover -s tests/atelier -p 'test_*.py' -v
+      - node --test tests/atelier/atelier.test.cjs
+      - bash -n tools/pi/01-install-fork
