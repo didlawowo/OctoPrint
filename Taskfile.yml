@@ -15,6 +15,10 @@ vars:
   HOST: "127.0.0.1"
   PORT: "5000"
   BASEDIR: "{{.HOME}}/.octoprint-atelier-local"
+  CONFIG_PRESET: configs/atelier-local.yaml
+  LOCAL_USER: ""
+  LOCAL_NETWORKS: ""
+  OCTOPRINT_PYTHON: .venv/bin/python
 
 tasks:
   venv:
@@ -43,6 +47,23 @@ tasks:
       - task: install-dev
       - .venv/bin/pre-commit install
       - git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+  configure:
+    desc: Inject the first-start preset and local auto-login while OctoPrint is stopped
+    env:
+      ATELIER_RUNTIME: "{{.OCTOPRINT_PYTHON}}"
+      ATELIER_BASEDIR: "{{.BASEDIR}}"
+      ATELIER_PRESET: "{{.CONFIG_PRESET}}"
+      ATELIER_USER: "{{.LOCAL_USER}}"
+      ATELIER_NETWORKS: "{{.LOCAL_NETWORKS}}"
+    preconditions:
+      - sh: test -x "$ATELIER_RUNTIME"
+        msg: Run task init-dev first, or set OCTOPRINT_PYTHON to the Pi's installed Python.
+    cmds:
+      - |
+        "$ATELIER_RUNTIME" tools/configure-local.py \
+          --basedir "$ATELIER_BASEDIR" --preset "$ATELIER_PRESET" \
+          --user "$ATELIER_USER" --networks "$ATELIER_NETWORKS"
 
   dev:
     desc: Run Atelier locally without a Raspberry Pi or manual environment activation
