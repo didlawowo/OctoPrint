@@ -10,6 +10,8 @@ import zipfile
 from pathlib import Path
 from unittest.mock import patch
 
+import yaml
+
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools" / "pi"))
 import image  # noqa: E402
@@ -163,6 +165,27 @@ class ImageBuildTests(unittest.TestCase):
             with self.assertRaises(RuntimeError):
                 image.build()
             run.assert_called_once_with("git", "status", "--porcelain", capture=True)
+
+
+class AtelierImageIntegrationTests(unittest.TestCase):
+    def test_octopi_11_venv_is_primary_and_firstboot_is_wired(self):
+        installer = (ROOT / "tools" / "pi" / "01-install-fork").read_text()
+        helper = (ROOT / "tools" / "pi" / "atelier-firstboot").read_text()
+        unit = (ROOT / "tools" / "pi" / "atelier-firstboot.service").read_text()
+        self.assertIn("venv=/opt/octopi/oprint", installer)
+        self.assertIn("venv=/opt/octopi/oprint", helper)
+        self.assertIn("Requires=atelier-firstboot.service", installer)
+        self.assertIn("Before=octoprint.service", unit)
+        self.assertIn('getent passwd "$service_user"', helper)
+        self.assertNotIn("#!/home/pi/oprint/bin/python", installer)
+
+    def test_preset_autoconnects_without_forcing_a_port_or_baudrate(self):
+        preset = yaml.safe_load((ROOT / "configs" / "atelier-local.yaml").read_text())
+        connection = preset["printerConnection"]
+        self.assertTrue(connection["autoconnect"])
+        self.assertEqual(connection["preferred"]["connector"], "serial")
+        self.assertIsNone(connection["preferred"]["parameters"]["port"])
+        self.assertIsNone(connection["preferred"]["parameters"]["baudrate"])
 
 
 if __name__ == "__main__":
