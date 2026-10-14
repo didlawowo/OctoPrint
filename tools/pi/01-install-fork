@@ -5,35 +5,39 @@ export LC_ALL=C
 source /common.sh
 install_cleanup_trap
 
-venv=/home/pi/oprint
+venv=/opt/octopi/oprint
+[[ -x "$venv/bin/python" ]] || venv=/home/pi/oprint
 [[ -x "$venv/bin/python" ]] || { echo 'Image incompatible : venv OctoPi absent.' >&2; exit 1; }
-"$venv/bin/python" -c 'import sys; assert sys.version_info >= (3, 10), "OctoPrint dev requiert Python >= 3.10"'
+owner=$(stat -c '%U' "$venv")
+[[ "$owner" != "UNKNOWN" ]] || owner=pi
+"$venv/bin/python" -c 'import sys; assert sys.version_info >= (3, 10), "OctoPrint requiert Python >= 3.10"'
 work=$(mktemp -d /tmp/atelier-build.XXXXXX)
 tar -xf /files/source.tar -C "$work"
 chown -R pi:pi "$work"
 source_dir="$work/source"
 
 # The fork's French catalogue must be in the installed package, not only in translations/.
-sudo -u pi "$venv/bin/pybabel" compile -d "$source_dir/translations" -l fr
+sudo -u "$owner" "$venv/bin/pybabel" compile -d "$source_dir/translations" -l fr
 mkdir -p "$source_dir/src/octoprint/translations/fr"
 cp -a "$source_dir/translations/fr/." "$source_dir/src/octoprint/translations/fr/"
 chown -R pi:pi "$work"
-sudo -u pi "$venv/bin/python" -m pip install --no-cache-dir --upgrade "$source_dir"
+sudo -u "$owner" "$venv/bin/python" -m pip install --no-cache-dir --upgrade "$source_dir"
 
-# Preserve wizard, accounts, authentication, serial and webcam settings.
-sudo -u pi "$venv/bin/python" - <<'PYCONFIG'
-from pathlib import Path
-import yaml
-path = Path('/home/pi/.octoprint/config.yaml')
-config = yaml.safe_load(path.read_text()) if path.exists() else {}
-config = config or {}
-config.setdefault('appearance', {})['defaultLanguage'] = 'fr'
-config.setdefault('feature', {})['printStartConfirmation'] = True
-config['feature']['printCancelConfirmation'] = True
-path.parent.mkdir(parents=True, exist_ok=True)
-path.write_text(yaml.safe_dump(config, allow_unicode=True), encoding='utf-8')
-PYCONFIG
-sudo -u pi "$venv/bin/python" - <<'PYCHECK'
+# First-boot provisioning runs after Raspberry Pi Imager has applied the final
+# UID 1000 username/home. No shared password or account is baked into the image.
+install -d -m 0755 /opt/octopi/atelier
+install -m 0755 "$source_dir/tools/configure-local.py" /opt/octopi/atelier/configure-local.py
+install -m 0644 "$source_dir/configs/atelier-local.yaml" /opt/octopi/atelier/atelier-local.yaml
+install -m 0755 "$source_dir/tools/pi/atelier-firstboot" /usr/local/sbin/atelier-firstboot
+install -m 0644 "$source_dir/tools/pi/atelier-firstboot.service" /etc/systemd/system/atelier-firstboot.service
+install -d -m 0755 /etc/systemd/system/octoprint.service.d
+cat >/etc/systemd/system/octoprint.service.d/atelier-firstboot.conf <<'EOF'
+[Unit]
+Requires=atelier-firstboot.service
+After=atelier-firstboot.service
+EOF
+
+sudo -u "$owner" "$venv/bin/python" - <<'PYCHECK'
 from importlib.resources import files
 import octoprint
 root = files('octoprint')
