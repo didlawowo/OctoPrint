@@ -33,6 +33,9 @@ jobs:
           p.write_text(text.replace(old, new))
           p = root / 'src/octoprint/plugins/atelier/static/js/atelier.js'
           p.write_text(p.read_text().replace('/* global OCTOPRINT_VIEWMODELS */', '/* global OCTOPRINT_VIEWMODELS, module */'))
+          for name, dimensions in [('atelier_navigation.jinja2', 'width="32" height="32"'), ('atelier_tab.jinja2', 'width="640" height="400"')]:
+              p = root / 'src/octoprint/plugins/atelier/templates' / name
+              p.write_text(p.read_text().replace('<img ', '<img ' + dimensions + ' '))
           p = root / 'tests/playwright/specs/atelier.spec.js'
           p.write_text(p.read_text().replace('errors.push(error.message)', 'errors.push(error.stack || error.message)'))
           p = root / '.pre-commit-config.yaml'
@@ -46,14 +49,6 @@ jobs:
           text = text.replace('    timeout-minutes: 30\n', '    timeout-minutes: 30\n    env:\n      GIT_VERSION_BRANCH: ' + context + '\n')
           text = text.replace('          task --list\n', '          python -c "import octoprint; assert octoprint.__version__.startswith(\'2.1.0.dev\'), octoprint.__version__"\n          task --list\n')
           text = text.replace('--project=chromium --workers=1', '--project=chromium --workers=1 --retries=0 --max-failures=1')
-          text += '''      - name: Save responsive UI screenshots and test traces
-                  if: always()
-                  uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-                  with:
-                    name: atelier-ui
-                    path: tests/playwright/test-results
-                    retention-days: 5
-          '''.replace('        ', '', 1) if False else ''
           text += ('      - name: Save responsive UI screenshots and test traces\n'
                    '        if: always()\n'
                    '        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a\n'
@@ -92,7 +87,6 @@ jobs:
           '''
           import textwrap
           (root / 'tests/atelier/test_version.py').write_text(textwrap.dedent(test))
-          # This one-time preparation workflow is not part of the resulting tree.
           (root / '.github/workflows/atelier-prepare.yml').unlink()
           PY
       - name: Apply repository formatters and verify all changed files
