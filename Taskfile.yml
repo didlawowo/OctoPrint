@@ -14,13 +14,13 @@ vars:
   PYTHON_VERSION: "3.11"
   HOST: "127.0.0.1"
   PORT: "5000"
-  BASEDIR: '{{.HOME}}/.octoprint-atelier-local'
+  BASEDIR: "{{.HOME}}/.octoprint-atelier-local"
 
 tasks:
   venv:
     desc: Prepare a uv-managed .venv, preserving any broken previous environment
     env:
-      ATELIER_PYTHON: '{{.PYTHON_VERSION}}'
+      ATELIER_PYTHON: "{{.PYTHON_VERSION}}"
     cmds:
       - bash tools/dev-env.sh
 
@@ -47,9 +47,9 @@ tasks:
   dev:
     desc: Run Atelier locally without a Raspberry Pi or manual environment activation
     env:
-      ATELIER_HOST: '{{.HOST}}'
-      ATELIER_PORT: '{{.PORT}}'
-      ATELIER_BASEDIR: '{{.BASEDIR}}'
+      ATELIER_HOST: "{{.HOST}}"
+      ATELIER_PORT: "{{.PORT}}"
+      ATELIER_BASEDIR: "{{.BASEDIR}}"
     cmds:
       - task: install
       - task: babel-compile

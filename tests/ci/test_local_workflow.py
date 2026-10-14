@@ -56,7 +56,8 @@ class LocalCiContractTests(unittest.TestCase):
 
     def test_core_discovery_and_required_junit_evidence_are_preserved(self):
         step = next(
-            step for step in self.jobs["test"]["steps"]
+            step
+            for step in self.jobs["test"]["steps"]
             if ".venv/bin/python -m pytest" in step.get("run", "")
         )
         command = step["run"]
@@ -66,18 +67,20 @@ class LocalCiContractTests(unittest.TestCase):
         self.assertNotIn("-o addopts", command)
         self.assertNotIn("continue-on-error", step)
         evidence = next(
-            step for step in self.jobs["test"]["steps"]
+            step
+            for step in self.jobs["test"]["steps"]
             if step.get("with", {}).get("name") == "atelier-python-results"
         )
         self.assertEqual(evidence["if"], "always()")
 
     def test_python_311_ci_is_isolated_from_cross_version_uv_resolution(self):
         for job in ("test", "browser"):
-            commands = "\n".join(
-                step.get("run", "") for step in self.jobs[job]["steps"]
-            )
+            commands = "\n".join(step.get("run", "") for step in self.jobs[job]["steps"])
             self.assertIn("uv venv --no-project --python 3.11 .venv", commands)
-            self.assertIn('uv pip install --python .venv/bin/python --editable ".[develop]"', commands)
+            self.assertIn(
+                'uv pip install --python .venv/bin/python --editable ".[develop]"',
+                commands,
+            )
             self.assertNotIn("uv sync", commands)
             self.assertNotIn("uv run", commands)
         self.assertIn(".venv/bin/task pi:test", self.source)

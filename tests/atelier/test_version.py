@@ -30,7 +30,9 @@ class ForkVersionTests(unittest.TestCase):
             "(origin/feat/atelier-mobile-tablet)",
             "(HEAD -> feat/atelier-mobile-tablet, origin/feat/atelier-mobile-tablet)",
         ):
-            expanded = source.replace("$Format:%d$", refs).replace("$Format:%H$", "a" * 40)
+            expanded = source.replace("$Format:%d$", refs).replace(
+                "$Format:%H$", "a" * 40
+            )
             namespace = {"__file__": str(SOURCE), "__name__": "fork_version_test"}
             exec(compile(expanded, str(SOURCE), "exec"), namespace)
             result = namespace["_get_data_from_keywords"]()

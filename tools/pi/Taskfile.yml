@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 
 vars:
   IMAGE: build/atelier-pi/octopi-atelier.img
@@ -15,7 +15,7 @@ tasks:
   flash:
     desc: Ouvrir l’image dans Raspberry Pi Imager pour configurer et flasher la SD
     env:
-      ATELIER_IMAGE: '{{.IMAGE}}'
+      ATELIER_IMAGE: "{{.IMAGE}}"
     cmds:
       - python3 tools/pi/image.py imager --image "$ATELIER_IMAGE"
   devices:
@@ -27,8 +27,8 @@ tasks:
     requires:
       vars: [DEVICE]
     env:
-      ATELIER_IMAGE: '{{.IMAGE}}'
-      ATELIER_DEVICE: '{{.DEVICE}}'
+      ATELIER_IMAGE: "{{.IMAGE}}"
+      ATELIER_DEVICE: "{{.DEVICE}}"
     cmds:
       - python3 tools/pi/sdcard.py --image "$ATELIER_IMAGE" --device "$ATELIER_DEVICE" --dry-run
   flash-cli:
@@ -36,8 +36,8 @@ tasks:
     requires:
       vars: [DEVICE]
     env:
-      ATELIER_IMAGE: '{{.IMAGE}}'
-      ATELIER_DEVICE: '{{.DEVICE}}'
+      ATELIER_IMAGE: "{{.IMAGE}}"
+      ATELIER_DEVICE: "{{.DEVICE}}"
     cmds:
       - sudo -- python3 tools/pi/sdcard.py --image "$ATELIER_IMAGE" --device "$ATELIER_DEVICE"
   test:

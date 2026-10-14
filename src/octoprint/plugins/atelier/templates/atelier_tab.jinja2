@@ -1,73 +1,210 @@
-<div class="atelier-shell" data-bind="visible: enabled" style="display: none">
+<div class="atelier-shell"
+     data-bind="visible: enabled"
+     style="display: none">
     <header class="atelier-heading">
         <div class="atelier-printer">
             <span class="atelier-printer-icon"><i class="fas fa-print" aria-hidden="true"></i></span>
-            <div><p class="atelier-eyebrow">MON ATELIER</p><h1 data-bind="text: printerName">Mon imprimante</h1></div>
+            <div>
+                <p class="atelier-eyebrow">MON ATELIER</p>
+                <h1 data-bind="text: printerName">Mon imprimante</h1>
+            </div>
         </div>
-        <button type="button" class="atelier-status" data-test-id="atelier-connection"
+        <button type="button"
+                class="atelier-status"
+                data-test-id="atelier-connection"
                 data-bind="click: openConnection, css: {'is-connected': connected}">
             <span class="atelier-status-dot" aria-hidden="true"></span>
             <span data-bind="text: statusLabel" role="status">Connexion…</span>
             <i class="fas fa-chevron-down" aria-hidden="true"></i>
         </button>
     </header>
-    <div class="atelier-alert" role="alert" data-bind="visible: state.hasErrorString, text: state.errorString"></div>
-    <div class="atelier-grid" data-bind="css: {'atelier-camera-only': section() === 'camera'}">
-        <section class="atelier-card atelier-job" data-bind="visible: section() === 'home'" aria-labelledby="atelier-job-title">
-            <div class="atelier-card-heading"><h2 id="atelier-job-title"><i class="far fa-file-alt" aria-hidden="true"></i> Impression</h2><span class="atelier-label" data-bind="text: statusLabel"></span></div>
-            <div class="atelier-job-content">
-                <div class="atelier-model-icon"><i class="fas fa-cube" aria-hidden="true"></i></div>
-                <div class="atelier-job-description"><h3 data-bind="text: state.filedisplay() || state.filename() || 'Aucun fichier sélectionné'"></h3><p data-bind="text: state.filename() ? 'Fichier sélectionné sur l’imprimante' : 'Choisis un fichier pour commencer.'"></p></div>
+    <div class="atelier-alert"
+         role="alert"
+         data-bind="visible: state.hasErrorString, text: state.errorString"></div>
+    <div class="atelier-grid"
+         data-bind="css: {'atelier-camera-only': section() === 'camera'}">
+        <section class="atelier-card atelier-job"
+                 data-bind="visible: section() === 'home'"
+                 aria-labelledby="atelier-job-title">
+            <div class="atelier-card-heading">
+                <h2 id="atelier-job-title">
+                    <i class="far fa-file-alt" aria-hidden="true"></i> Impression
+                </h2>
+                <span class="atelier-label" data-bind="text: statusLabel"></span>
             </div>
-            <div class="atelier-progress" role="progressbar" aria-label="Progression de l’impression" aria-valuemin="0" aria-valuemax="100" data-bind="attr: {'aria-valuenow': progress}, visible: state.filename">
+            <div class="atelier-job-content">
+                <div class="atelier-model-icon">
+                    <i class="fas fa-cube" aria-hidden="true"></i>
+                </div>
+                <div class="atelier-job-description">
+                    <h3 data-bind="text: state.filedisplay() || state.filename() || 'Aucun fichier sélectionné'"></h3>
+                    <p data-bind="text: state.filename() ? 'Fichier sélectionné sur l’imprimante' : 'Choisis un fichier pour commencer.'">
+                    </p>
+                </div>
+            </div>
+            <div class="atelier-progress"
+                 role="progressbar"
+                 aria-label="Progression de l’impression"
+                 aria-valuemin="0"
+                 aria-valuemax="100"
+                 data-bind="attr: {'aria-valuenow': progress}, visible: state.filename">
                 <span data-bind="style: {width: progress() + '%'}"></span>
             </div>
             <div class="atelier-metrics" data-bind="visible: state.filename">
-                <div><span>Progression</span><strong data-bind="text: progressLabel"></strong></div>
-                <div><span>Temps écoulé</span><strong data-bind="text: state.printTimeString"></strong></div>
-                <div><span>Temps restant estimé</span><strong data-bind="text: state.printTimeLeftString"></strong></div>
+                <div>
+                    <span>Progression</span><strong data-bind="text: progressLabel"></strong>
+                </div>
+                <div>
+                    <span>Temps écoulé</span><strong data-bind="text: state.printTimeString"></strong>
+                </div>
+                <div>
+                    <span>Temps restant estimé</span><strong data-bind="text: state.printTimeLeftString"></strong>
+                </div>
             </div>
             <div class="atelier-actions">
-                <button type="button" class="atelier-button atelier-primary" data-test-id="atelier-print" data-bind="click: print, enable: canPrint, visible: !state.isPrinting() && !state.isPaused()"><i class="fas fa-play" aria-hidden="true"></i> Imprimer</button>
-                <button type="button" class="atelier-button" data-test-id="atelier-pause" data-bind="click: pause, enable: canPause, visible: state.isPrinting() || state.isPaused()"><i class="fas" data-bind="css: {'fa-play': state.isPaused(), 'fa-pause': !state.isPaused()}" aria-hidden="true"></i> <span data-bind="text: state.isPaused() ? 'Reprendre' : 'Pause'"></span></button>
-                <button type="button" class="atelier-button atelier-danger" data-test-id="atelier-cancel" data-bind="click: cancel, enable: canCancel, visible: state.isPrinting() || state.isPaused()"><i class="fas fa-stop" aria-hidden="true"></i> Annuler</button>
-                <button type="button" class="atelier-button" data-bind="click: function(){ navigate('files'); }, visible: !state.isPrinting() && !state.isPaused(), enable: hasFilesPermission"><i class="far fa-folder-open" aria-hidden="true"></i> Choisir un fichier</button>
+                <button type="button"
+                        class="atelier-button atelier-primary"
+                        data-test-id="atelier-print"
+                        data-bind="click: print, enable: canPrint, visible: !state.isPrinting() && !state.isPaused()">
+                    <i class="fas fa-play" aria-hidden="true"></i> Imprimer
+                </button>
+                <button type="button"
+                        class="atelier-button"
+                        data-test-id="atelier-pause"
+                        data-bind="click: pause, enable: canPause, visible: state.isPrinting() || state.isPaused()">
+                    <i class="fas"
+                       data-bind="css: {'fa-play': state.isPaused(), 'fa-pause': !state.isPaused()}"
+                       aria-hidden="true"></i> <span data-bind="text: state.isPaused() ? 'Reprendre' : 'Pause'"></span>
+                </button>
+                <button type="button"
+                        class="atelier-button atelier-danger"
+                        data-test-id="atelier-cancel"
+                        data-bind="click: cancel, enable: canCancel, visible: state.isPrinting() || state.isPaused()">
+                    <i class="fas fa-stop" aria-hidden="true"></i> Annuler
+                </button>
+                <button type="button"
+                        class="atelier-button"
+                        data-bind="click: function(){ navigate('files'); }, visible: !state.isPrinting() && !state.isPaused(), enable: hasFilesPermission">
+                    <i class="far fa-folder-open" aria-hidden="true"></i> Choisir un fichier
+                </button>
             </div>
         </section>
-        <section class="atelier-card atelier-temperatures" data-bind="visible: section() === 'home'" aria-labelledby="atelier-temperature-title">
-            <div class="atelier-card-heading"><h2 id="atelier-temperature-title"><i class="fas fa-thermometer-half" aria-hidden="true"></i> Températures</h2><button class="atelier-text-button" type="button" data-bind="click: function(){ native('#temp'); }">Régler <i class="fas fa-chevron-right" aria-hidden="true"></i></button></div>
+        <section class="atelier-card atelier-temperatures"
+                 data-bind="visible: section() === 'home'"
+                 aria-labelledby="atelier-temperature-title">
+            <div class="atelier-card-heading">
+                <h2 id="atelier-temperature-title">
+                    <i class="fas fa-thermometer-half" aria-hidden="true"></i> Températures
+                </h2>
+                <button class="atelier-text-button"
+                        type="button"
+                        data-bind="click: function(){ native('#temp'); }">
+                    Régler <i class="fas fa-chevron-right" aria-hidden="true"></i>
+                </button>
+            </div>
             <div class="atelier-heaters" data-bind="foreach: heaters">
                 <div class="atelier-heater" data-bind="css: {'atelier-bed': bed}">
-                    <div class="atelier-heater-label"><i class="fas" data-bind="css: {'fa-layer-group': bed, 'fa-thermometer-half': !bed}" aria-hidden="true"></i> <span data-bind="text: name"></span></div>
+                    <div class="atelier-heater-label">
+                        <i class="fas"
+                           data-bind="css: {'fa-layer-group': bed, 'fa-thermometer-half': !bed}"
+                           aria-hidden="true"></i> <span data-bind="text: name"></span>
+                    </div>
                     <strong data-bind="text: actual"></strong><span class="atelier-target">Cible : <span data-bind="text: target"></span></span>
-                    <svg viewBox="0 0 180 48" preserveAspectRatio="none" aria-hidden="true"><polyline fill="none" stroke="currentColor" stroke-width="2" vector-effect="non-scaling-stroke" data-bind="attr: {points: line}"></polyline></svg>
+                    <svg viewBox="0 0 180 48" preserveAspectRatio="none" aria-hidden="true">
+                        <polyline fill="none" stroke="currentColor" stroke-width="2" vector-effect="non-scaling-stroke" data-bind="attr: {points: line}"></polyline>
+                    </svg>
                 </div>
             </div>
             <p class="atelier-hint">Les courbes utilisent uniquement les mesures reçues de l’imprimante.</p>
         </section>
-        <section class="atelier-card atelier-camera" data-bind="visible: section() === 'home' || section() === 'camera', css: {'atelier-camera-preview': section() === 'home'}" aria-labelledby="atelier-camera-title">
-            <div class="atelier-card-heading"><h2 id="atelier-camera-title"><i class="fas fa-camera" aria-hidden="true"></i> Caméra</h2><button class="atelier-text-button" type="button" data-bind="click: function(){ navigate('camera'); }, visible: section() !== 'camera'">Agrandir</button></div>
+        <section class="atelier-card atelier-camera"
+                 data-bind="visible: section() === 'home' || section() === 'camera', css: {'atelier-camera-preview': section() === 'home'}"
+                 aria-labelledby="atelier-camera-title">
+            <div class="atelier-card-heading">
+                <h2 id="atelier-camera-title">
+                    <i class="fas fa-camera" aria-hidden="true"></i> Caméra
+                </h2>
+                <button class="atelier-text-button"
+                        type="button"
+                        data-bind="click: function(){ navigate('camera'); }, visible: section() !== 'camera'">
+                    Agrandir
+                </button>
+            </div>
             <div class="atelier-camera-frame">
                 <!-- ko if: cameraSource -->
-                <img alt="Vue en direct de l’imprimante" data-test-id="atelier-camera-stream" data-bind="attr: {src: cameraSource}, style: {transform: cameraTransform}, event: {error: cameraFailed}">
+                <img alt="Vue en direct de l’imprimante"
+                     data-test-id="atelier-camera-stream"
+                     data-bind="attr: {src: cameraSource}, style: {transform: cameraTransform}, event: {error: cameraFailed}">
                 <!-- /ko -->
-                <div class="atelier-camera-empty" data-bind="visible: !cameraSource()"><i class="fas fa-video" aria-hidden="true"></i><p data-bind="text: !hasWebcamPermission() ? 'Connexion requise ou accès caméra non autorisé.' : cameraError() ? 'Le flux caméra est indisponible.' : 'Aucun flux MJPEG disponible.'"></p><button type="button" class="atelier-button" data-bind="click: retryCamera, visible: cameraError">Réessayer</button></div>
+                <div class="atelier-camera-empty" data-bind="visible: !cameraSource()">
+                    <i class="fas fa-video" aria-hidden="true"></i>
+                    <p data-bind="text: !hasWebcamPermission() ? 'Connexion requise ou accès caméra non autorisé.' : cameraError() ? 'Le flux caméra est indisponible.' : 'Aucun flux MJPEG disponible.'">
+                    </p>
+                    <button type="button"
+                            class="atelier-button"
+                            data-bind="click: retryCamera, visible: cameraError">Réessayer</button>
+                </div>
             </div>
-            <button type="button" class="atelier-text-button" data-bind="click: function(){ native('#control', 'control'); }, enable: hasWebcamPermission">Lecteur natif et autres caméras <i class="fas fa-arrow-right" aria-hidden="true"></i></button>
+            <button type="button"
+                    class="atelier-text-button"
+                    data-bind="click: function(){ native('#control', 'control'); }, enable: hasWebcamPermission">
+                Lecteur natif et autres caméras <i class="fas fa-arrow-right" aria-hidden="true"></i>
+            </button>
         </section>
-        <section class="atelier-card atelier-recent" data-bind="visible: section() === 'home' && hasFilesPermission()" aria-labelledby="atelier-recent-title">
-            <div class="atelier-card-heading"><h2 id="atelier-recent-title"><i class="far fa-folder-open" aria-hidden="true"></i> Fichiers récents</h2><button type="button" class="atelier-text-button" data-bind="click: function(){ navigate('files'); }">Voir tout <i class="fas fa-chevron-right" aria-hidden="true"></i></button></div>
-            <div data-bind="foreach: recentFiles"><button type="button" class="atelier-file" data-bind="click: function(){ $root.navigate('files'); }"><span class="atelier-file-icon"><i class="fas fa-cube" aria-hidden="true"></i></span><span><strong data-bind="text: $data.display || $data.name"></strong><small data-bind="text: $root.fileSize($data)"></small></span><i class="fas fa-chevron-right" aria-hidden="true"></i></button></div>
-            <p class="atelier-hint" data-bind="visible: recentFiles().length === 0">Ajoute ton premier fichier depuis l’onglet Fichiers.</p>
+        <section class="atelier-card atelier-recent"
+                 data-bind="visible: section() === 'home' && hasFilesPermission()"
+                 aria-labelledby="atelier-recent-title">
+            <div class="atelier-card-heading">
+                <h2 id="atelier-recent-title">
+                    <i class="far fa-folder-open" aria-hidden="true"></i> Fichiers récents
+                </h2>
+                <button type="button"
+                        class="atelier-text-button"
+                        data-bind="click: function(){ navigate('files'); }">
+                    Voir tout <i class="fas fa-chevron-right" aria-hidden="true"></i>
+                </button>
+            </div>
+            <div data-bind="foreach: recentFiles">
+                <button type="button"
+                        class="atelier-file"
+                        data-bind="click: function(){ $root.navigate('files'); }">
+                    <span class="atelier-file-icon"><i class="fas fa-cube" aria-hidden="true"></i></span><span><strong data-bind="text: $data.display || $data.name"></strong><small data-bind="text: $root.fileSize($data)"></small></span><i class="fas fa-chevron-right" aria-hidden="true"></i>
+                </button>
+            </div>
+            <p class="atelier-hint" data-bind="visible: recentFiles().length === 0">
+                Ajoute ton premier fichier depuis l’onglet Fichiers.
+            </p>
         </section>
-        <section class="atelier-card atelier-quick" data-bind="visible: section() === 'home'" aria-labelledby="atelier-quick-title">
-            <div class="atelier-card-heading"><h2 id="atelier-quick-title"><i class="fas fa-sliders-h" aria-hidden="true"></i> Contrôles rapides</h2></div>
-            <div class="atelier-quick-grid"><button type="button" class="atelier-button" data-bind="click: function(){ navigate('control'); }"><i class="fas fa-arrows-alt" aria-hidden="true"></i> Axes et extrusion</button><button type="button" class="atelier-button" data-bind="click: function(){ native('#temp'); }"><i class="fas fa-thermometer-half" aria-hidden="true"></i> Préchauffage</button></div>
+        <section class="atelier-card atelier-quick"
+                 data-bind="visible: section() === 'home'"
+                 aria-labelledby="atelier-quick-title">
+            <div class="atelier-card-heading">
+                <h2 id="atelier-quick-title">
+                    <i class="fas fa-sliders-h" aria-hidden="true"></i> Contrôles rapides
+                </h2>
+            </div>
+            <div class="atelier-quick-grid">
+                <button type="button"
+                        class="atelier-button"
+                        data-bind="click: function(){ navigate('control'); }">
+                    <i class="fas fa-arrows-alt" aria-hidden="true"></i> Axes et extrusion
+                </button>
+                <button type="button"
+                        class="atelier-button"
+                        data-bind="click: function(){ native('#temp'); }">
+                    <i class="fas fa-thermometer-half" aria-hidden="true"></i> Préchauffage
+                </button>
+            </div>
             <p class="atelier-hint">Ouvre les commandes avant d’agir : aucun mouvement ni chauffage au simple appui ici.</p>
         </section>
     </div>
-    <section class="atelier-card atelier-files" data-bind="visible: section() === 'files'">
-        <div class="atelier-card-heading"><h2><i class="far fa-folder-open" aria-hidden="true"></i> Fichiers</h2></div>
+    <section class="atelier-card atelier-files"
+             data-bind="visible: section() === 'files'">
+        <div class="atelier-card-heading">
+            <h2>
+                <i class="far fa-folder-open" aria-hidden="true"></i> Fichiers
+            </h2>
+        </div>
         <div id="atelier-files-slot" data-bind="allowBindings: false"></div>
     </section>
 </div>

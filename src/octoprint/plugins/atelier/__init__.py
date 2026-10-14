@@ -15,7 +15,9 @@ class AtelierPlugin(octoprint.plugin.AssetPlugin, octoprint.plugin.TemplatePlugi
 
 
 __plugin_name__ = "Atelier — interface mobile et tablette"
-__plugin_description__ = "Tableau de bord tactile du fork, avec accès à l'interface classique."
+__plugin_description__ = (
+    "Tableau de bord tactile du fork, avec accès à l'interface classique."
+)
 __plugin_license__ = "AGPLv3"
 __plugin_pythoncompat__ = ">=3.10,<4"
 __plugin_implementation__ = AtelierPlugin()

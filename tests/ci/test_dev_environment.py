@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 # A fake uv uses Python's no-pip EnvBuilder only to provide realistic test fixtures.
 # The production bootstrap must never use Homebrew's venv/ensurepip.
-FAKE_UV = r'''
+FAKE_UV = r"""
 import json
 import os
 import subprocess
@@ -45,7 +45,7 @@ elif args[0] == "venv":
         subprocess.run([sys._base_executable, "-m", "venv", "--without-pip", str(target)], check=True)
 else:
     raise SystemExit("Unexpected uv command: " + repr(args))
-'''
+"""
 
 
 class DevEnvironmentTests(unittest.TestCase):
@@ -99,7 +99,8 @@ class DevEnvironmentTests(unittest.TestCase):
         calls = [record["args"] for record in self.records()]
         self.assertEqual(calls[0], ["python", "install", "3.11"])
         self.assertEqual(
-            calls[1], ["python", "find", "--managed-python", "--system", "--no-project", "3.11"]
+            calls[1],
+            ["python", "find", "--managed-python", "--system", "--no-project", "3.11"],
         )
         self.assertEqual(calls[2][0], "venv")
         self.assertIn("--managed-python", calls[2])
@@ -197,11 +198,15 @@ class DevTaskContractTests(unittest.TestCase):
         for name in ("install", "install-dev"):
             commands = self.tasks[name]["cmds"]
             self.assertEqual(commands[0], {"task": "venv"})
-            self.assertTrue(commands[1].startswith("uv pip install --python .venv/bin/python "))
+            self.assertTrue(
+                commands[1].startswith("uv pip install --python .venv/bin/python ")
+            )
             self.assertNotIn("--system", commands[1])
         self.assertNotIn("pipx", self.source)
         self.assertNotIn("python -m pip", self.source)
-        self.assertEqual(self.tasks["init-dev"]["cmds"][1], ".venv/bin/pre-commit install")
+        self.assertEqual(
+            self.tasks["init-dev"]["cmds"][1], ".venv/bin/pre-commit install"
+        )
 
     def test_launch_runs_setup_and_translations_in_order_then_the_local_binary(self):
         commands = self.tasks["dev"]["cmds"]
@@ -229,7 +234,11 @@ class DevTaskContractTests(unittest.TestCase):
             root = Path(temporary)
             subprocess.run(["git", "init", "-q", str(root)], check=True)
             shutil.copy2(ROOT / ".gitignore", root / ".gitignore")
-            paths = [".venv/bin/activate", "venv/bin/python", ".venv.broken-123/bin/python"]
+            paths = [
+                ".venv/bin/activate",
+                "venv/bin/python",
+                ".venv.broken-123/bin/python",
+            ]
             result = subprocess.run(
                 ["git", "check-ignore", "--stdin"],
                 cwd=root,
@@ -240,7 +249,12 @@ class DevTaskContractTests(unittest.TestCase):
             )
             self.assertEqual(result.stdout.splitlines(), paths)
             result = subprocess.run(
-                ["git", "check-ignore", "tools/dev-env.sh", "tests/ci/test_dev_environment.py"],
+                [
+                    "git",
+                    "check-ignore",
+                    "tools/dev-env.sh",
+                    "tests/ci/test_dev_environment.py",
+                ],
                 cwd=root,
                 capture_output=True,
                 check=False,
