@@ -62,7 +62,13 @@ BRANCH_VERSIONS = [
     {
         "tag": "2.1.0",
         "commit": "d0268b28427c6dc632bccdc75433ba67e53a5650",
-        "patterns": ["dev", "fix/.*", "wip/.*", "dependabot/.*"],
+        "patterns": [
+            "dev",
+            "fix/.*",
+            "wip/.*",
+            "dependabot/.*",
+            "(?:origin/)?feat/(?:translate-fr|atelier-mobile-tablet)$",
+        ],
     },
 ]
 

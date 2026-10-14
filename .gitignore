@@ -39,6 +39,9 @@ build.log
 .python-version
 .tox
 
+# Local environments and non-destructive recovery backups
+.venv/
+.venv.broken-*/
 venv*
 testconf*
 .auth
