@@ -10,8 +10,8 @@ jobs:
     if: github.repository == 'didlawowo/OctoPrint' && github.ref == 'refs/heads/feat/atelier-mobile-tablet'
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    permissions:
-      contents: write
+    env:
+      GIT_VERSION_BRANCH: feat/atelier-mobile-tablet
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -20,129 +20,54 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.11'
-      - name: Correct fork version discovery and regression coverage
+      - name: Apply the pinned correction script and run all formatters and unit tests
         run: |
+          python -m pip install pyyaml
           python - <<'PY'
-          from pathlib import Path
-          root = Path('.')
-          p = root / 'src/octoprint/_version.py'
-          old = '"patterns": ["dev", "fix/.*", "wip/.*", "dependabot/.*"],'
-          new = '"patterns": ["dev", "fix/.*", "wip/.*", "dependabot/.*", "(?:origin/)?feat/(?:translate-fr|atelier-mobile-tablet)$"],'
-          text = p.read_text()
-          assert text.count(old) == 1
-          p.write_text(text.replace(old, new))
-          p = root / 'src/octoprint/plugins/atelier/static/js/atelier.js'
-          p.write_text(p.read_text().replace('/* global OCTOPRINT_VIEWMODELS */', '/* global OCTOPRINT_VIEWMODELS, module */'))
-          for name, dimensions in [('atelier_navigation.jinja2', 'width="32" height="32"'), ('atelier_tab.jinja2', 'width="640" height="400"')]:
-              p = root / 'src/octoprint/plugins/atelier/templates' / name
-              p.write_text(p.read_text().replace('<img ', '<img ' + dimensions + ' '))
-          p = root / 'tests/playwright/specs/atelier.spec.js'
-          p.write_text(p.read_text().replace('errors.push(error.message)', 'errors.push(error.stack || error.message)'))
-          p = root / '.pre-commit-config.yaml'
-          old = '      - id: codespell\n'
-          new = old + '        args: ["--ignore-words-list=connexion,mesures,mouvement,somme,invalide,moteur,lien,bloc,complet,bord"]\n'
-          assert p.read_text().count(old) == 1
-          p.write_text(p.read_text().replace(old, new))
-          p = root / '.github/workflows/atelier.yml'
-          text = p.read_text()
-          context = '$' + '{{ github.head_ref || github.ref_name }}'
-          text = text.replace('    timeout-minutes: 30\n', '    timeout-minutes: 30\n    env:\n      GIT_VERSION_BRANCH: ' + context + '\n')
-          text = text.replace('          task --list\n', '          python -c "import octoprint; assert octoprint.__version__.startswith(\'2.1.0.dev\'), octoprint.__version__"\n          task --list\n')
-          text = text.replace('--project=chromium --workers=1', '--project=chromium --workers=1 --retries=0 --max-failures=1')
-          text += ('      - name: Save responsive UI screenshots and test traces\n'
-                   '        if: always()\n'
-                   '        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a\n'
-                   '        with:\n'
-                   '          name: atelier-ui\n'
-                   '          path: tests/playwright/test-results\n'
-                   '          retention-days: 5\n')
-          p.write_text(text)
-          p = root / 'tools/pi/01-install-fork'
-          p.write_text(p.read_text().replace("print('Fork installé :', octoprint.__version__)", "assert octoprint.__version__.startswith('2.1.0.dev'), 'Version/API du fork incorrecte : ' + octoprint.__version__\nprint('Fork installé :', octoprint.__version__)"))
-          test = '''"""Version metadata must preserve API 2 for fork checkouts and SD archives."""
-          import re
-          import runpy
-          import unittest
-          from pathlib import Path
-
-          SOURCE = Path(__file__).resolve().parents[2] / "src/octoprint/_version.py"
-
-
-          class ForkVersionTests(unittest.TestCase):
-              def test_fork_branches_follow_the_dev_version_line(self):
-                  data = runpy.run_path(str(SOURCE))
-                  for branch in ("feat/translate-fr", "feat/atelier-mobile-tablet", "origin/feat/atelier-mobile-tablet"):
-                      versions = [item["tag"] for item in data["BRANCH_VERSIONS"] if any(re.match(pattern, branch) for pattern in item["patterns"])]
-                      self.assertEqual(versions, ["2.1.0"])
-
-              def test_source_archives_preserve_the_api_major_version(self):
-                  source = SOURCE.read_text()
-                  for refs in ("(HEAD -> feat/atelier-mobile-tablet)", "(origin/feat/atelier-mobile-tablet)", "(HEAD -> feat/atelier-mobile-tablet, origin/feat/atelier-mobile-tablet)"):
-                      expanded = source.replace("$Format:%d$", refs).replace("$Format:%H$", "a" * 40)
-                      namespace = {"__file__": str(SOURCE), "__name__": "fork_version_test"}
-                      exec(compile(expanded, str(SOURCE), "exec"), namespace)
-                      result = namespace["_get_data_from_keywords"]()
-                      self.assertTrue(result["version"].startswith("2.1.0.dev"), result)
-                      self.assertEqual(result["revision"], "a" * 40)
-          '''
-          import textwrap
-          (root / 'tests/atelier/test_version.py').write_text(textwrap.dedent(test))
-          (root / '.github/workflows/atelier-prepare.yml').unlink()
+          import subprocess
+          import yaml
+          source = subprocess.check_output([
+              'git', 'show', 'd2c1e1b1dde892267356f1422f2b5a58a8a8a188:.github/workflows/atelier-prepare.yml'
+          ], text=True)
+          steps = yaml.safe_load(source)['jobs']['prepare']['steps']
+          for index in (2, 3):
+              subprocess.run(['bash', '-eo', 'pipefail', '-c', steps[index]['run']], check=True)
           PY
-      - name: Apply repository formatters and verify all changed files
-        env:
-          GIT_VERSION_BRANCH: feat/atelier-mobile-tablet
+      - name: Export reviewed changes without any repository write permission
         run: |
-          python -m pip install pre-commit
-          git add --intent-to-add tests/atelier/test_version.py
-          mapfile -t files < <(git diff --name-only 2da4261f99830325775a2d943ee2f0eb1c6755af --diff-filter=ACMR)
-          pre-commit run --files "${files[@]}" || true
-          pre-commit run --files "${files[@]}"
-          python -m unittest discover -s tests/atelier -p 'test_*.py' -v
-          node --test tests/atelier/atelier.test.cjs
-          bash -n tools/pi/01-install-fork
-      - name: Publish an unreferenced tree for review, never change a branch
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
+          mkdir -p /tmp/atelier-corrections
           python - <<'PY'
           import json
           import os
           from pathlib import Path
           import subprocess
-          import urllib.request
-
           def git(*args):
               return subprocess.check_output(['git', *args], text=True).strip()
-
-          allowed = (
-              'src/octoprint/plugins/atelier/', 'src/octoprint/_version.py',
-              'tools/pi/', 'tests/atelier/', 'tests/playwright/specs/atelier.spec.js',
-              'tests/playwright/fixtures.js', '.github/workflows/atelier.yml',
-              '.github/workflows/atelier-prepare.yml', '.pre-commit-config.yaml',
-              'Taskfile.yml', 'docs/fork/atelier.md',
-          )
           paths = git('diff', '--name-only', 'HEAD').splitlines()
-          assert paths and all(path.startswith(allowed) for path in paths), paths
-          tree = []
+          allowed = ('src/octoprint/plugins/atelier/', 'src/octoprint/_version.py',
+                     'tools/pi/', 'tests/atelier/', 'tests/playwright/specs/atelier.spec.js',
+                     'tests/playwright/fixtures.js', '.github/workflows/atelier.yml',
+                     '.github/workflows/atelier-prepare.yml', '.pre-commit-config.yaml',
+                     'Taskfile.yml', 'docs/fork/atelier.md')
+          assert paths and all(p.startswith(allowed) for p in paths), paths
+          entries = []
           for name in paths:
               path = Path(name)
               if not path.exists():
                   assert name == '.github/workflows/atelier-prepare.yml'
-                  tree.append({'path': name, 'mode': '100644', 'type': 'blob', 'sha': None})
+                  entry = {'path': name, 'mode': '100644', 'type': 'blob', 'sha': None}
               else:
-                  mode = '100755' if os.access(path, os.X_OK) else '100644'
-                  tree.append({'path': name, 'mode': mode, 'type': 'blob', 'content': path.read_text()})
-          payload = {'base_tree': git('rev-parse', 'HEAD^{tree}'), 'tree': tree}
-          request = urllib.request.Request(
-              'https://api.github.com/repos/didlawowo/OctoPrint/git/trees',
-              data=json.dumps(payload).encode(), method='POST',
-              headers={'Authorization': 'Bearer ' + os.environ['GH_TOKEN'],
-                       'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json'},
-          )
-          with urllib.request.urlopen(request, timeout=60) as response:
-              result = json.load(response)
-          print('PREPARED_TREE_SHA=' + result['sha'])
-          print('PARENT_COMMIT_SHA=' + git('rev-parse', 'HEAD'))
-          print('Changed paths:', json.dumps(paths))
+                  entry = {'path': name, 'mode': '100755' if os.access(path, os.X_OK) else '100644',
+                           'type': 'blob', 'content': path.read_text()}
+              entries.append(entry)
+              print('TREE_ENTRY_JSON=' + json.dumps(entry))
+          payload = {'parent_sha': git('rev-parse', 'HEAD'), 'base_tree': git('rev-parse', 'HEAD^{tree}'), 'tree': entries}
+          Path('/tmp/atelier-corrections/tree.json').write_text(json.dumps(payload, indent=2))
+          print('PARENT_COMMIT_SHA=' + payload['parent_sha'])
+          print('BASE_TREE_SHA=' + payload['base_tree'])
           PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: atelier-corrections
+          path: /tmp/atelier-corrections/tree.json
+          retention-days: 1
