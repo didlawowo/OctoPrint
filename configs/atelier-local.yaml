@@ -1,0 +1,16 @@
+# Non-secret first-start defaults. Existing operator choices take precedence.
+# Accounts, salts and API keys are created by OctoPrint, not stored in this file.
+appearance:
+  name: OctoPrint Atelier
+  defaultLanguage: fr
+server:
+  onlineCheck:
+    enabled: true
+  pluginBlocklist:
+    enabled: true
+plugins:
+  tracking:
+    enabled: false
+feature:
+  printStartConfirmation: true
+  printCancelConfirmation: true

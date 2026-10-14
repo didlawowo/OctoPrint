@@ -1,0 +1,8 @@
+{
+  "upstream_repository": "OctoPrint/OctoPrint",
+  "upstream_tag": "2.0.0rc6",
+  "upstream_commit": "75fef2506e6f4ce62b4b4e6eb6810ea67833622a",
+  "ported_from": "3c6f4ebf9589211a5e9a16c53e971baf9a81f77a",
+  "branch": "feat/atelier-2.0-rc6",
+  "release_candidate": true
+}

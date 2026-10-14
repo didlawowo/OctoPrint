@@ -1,0 +1,67 @@
+version: "3"
+
+vars:
+  IMAGE: build/atelier-pi/octopi-atelier.img
+  BUILD_MODE: auto
+  BUILD_HOST: nvidia
+  BUILD_COMMITTED: "0"
+
+tasks:
+  prepare:
+    desc: Vérifier le builder Linux local ou SSH (automatiquement nvidia depuis macOS)
+    env:
+      ATELIER_BUILD_MODE: "{{.BUILD_MODE}}"
+      ATELIER_BUILD_HOST: "{{.BUILD_HOST}}"
+    cmds:
+      - python3 tools/pi/remote.py prepare --mode "$ATELIER_BUILD_MODE" --host "$ATELIER_BUILD_HOST"
+  build:
+    desc: Construire l'image SD et la rapatrier (SSH nvidia depuis macOS)
+    env:
+      ATELIER_BUILD_MODE: "{{.BUILD_MODE}}"
+      ATELIER_BUILD_HOST: "{{.BUILD_HOST}}"
+      ATELIER_BUILD_COMMITTED: "{{.BUILD_COMMITTED}}"
+    cmds:
+      - |
+        set -- --mode "$ATELIER_BUILD_MODE" --host "$ATELIER_BUILD_HOST"
+        if [ "$ATELIER_BUILD_COMMITTED" = "1" ]; then
+          set -- "$@" --committed
+        fi
+        python3 tools/pi/remote.py build "$@"
+  fetch:
+    desc: Rapatrier à nouveau l'image du dernier build SSH terminé, sans reconstruire
+    cmds:
+      - python3 tools/pi/remote.py fetch
+  flash:
+    desc: Ouvrir l'image locale dans Raspberry Pi Imager pour flasher la SD de ce poste
+    env:
+      ATELIER_IMAGE: "{{.IMAGE}}"
+    cmds:
+      - python3 tools/pi/image.py imager --image "$ATELIER_IMAGE"
+  devices:
+    desc: Lister les disques Linux et leurs partitions (lecture seule)
+    cmds:
+      - python3 tools/pi/sdcard.py --list
+  flash-check:
+    desc: Vérifier une cible de flash brut Linux sans écrire (DEVICE obligatoire)
+    requires:
+      vars: [DEVICE]
+    env:
+      ATELIER_IMAGE: "{{.IMAGE}}"
+      ATELIER_DEVICE: "{{.DEVICE}}"
+    cmds:
+      - python3 tools/pi/sdcard.py --image "$ATELIER_IMAGE" --device "$ATELIER_DEVICE" --dry-run
+  flash-cli:
+    desc: Flash brut Linux interactif, destructif, avec vérification intégrale (DEVICE obligatoire)
+    requires:
+      vars: [DEVICE]
+    env:
+      ATELIER_IMAGE: "{{.IMAGE}}"
+      ATELIER_DEVICE: "{{.DEVICE}}"
+    cmds:
+      - sudo -- python3 tools/pi/sdcard.py --image "$ATELIER_IMAGE" --device "$ATELIER_DEVICE"
+  test:
+    desc: Tests des protections SD, du build SSH et du tableau de bord (sans matériel)
+    cmds:
+      - python3 -m unittest discover -s tests/atelier -p 'test_*.py' -v
+      - node --test tests/atelier/atelier.test.cjs
+      - bash -n tools/pi/01-install-fork
