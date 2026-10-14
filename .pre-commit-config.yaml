@@ -64,7 +64,10 @@ repos:
     rev: v2.4.1
     hooks:
       - id: codespell
-        args: ["--ignore-words-list=connexion,mesures,mouvement,somme,invalide,moteur,lien,bloc,complet,bord"]
+        args:
+          [
+            "--ignore-words-list=connexion,mesures,mouvement,somme,invalide,moteur,lien,bloc,complet,bord"
+          ]
         exclude: ^(src/octoprint/vendor/|tests/static/js/lib|tests/util/_files|tests/playwright|scripts/)
   - repo: https://github.com/OctoPrint/pre-commit-lessc
     rev: 4.3.0
