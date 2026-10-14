@@ -39,3 +39,30 @@ test("Classic fallback preserves the original files widget and tabs", async ({pa
     await expect(page.locator("#sidebar #files_wrapper")).toBeVisible();
     await expect(page.locator("#tabs")).toBeVisible();
 });
+
+test("Versioned API v2 contracts for connection and file storage", async ({page, loginApi, ui}) => {
+    await loginApi.loginDefault();
+    await page.goto("/?l10n=fr");
+    await ui.coreHasLoaded();
+
+    const headers = {"X-OctoPrint-Api-Version": "2.0.0"};
+    const connection = await page.request.get("/api/connection", {headers});
+    expect(connection.ok()).toBeTruthy();
+    const connectionData = await connection.json();
+    expect(Array.isArray(connectionData.options.connectors)).toBeTruthy();
+    expect(connectionData.current).toHaveProperty("state");
+    expect(connectionData.options).toHaveProperty("preferredConnector");
+    if (connectionData.options.preferredConnector != null) {
+        expect(typeof connectionData.options.preferredConnector.connector).toBe("string");
+    }
+
+    const files = await page.request.get("/api/files?recursive=true", {headers});
+    expect(files.ok()).toBeTruthy();
+    const storageData = await files.json();
+    for (const storage of Object.values(storageData)) {
+        expect(Array.isArray(storage.files)).toBeTruthy();
+    }
+
+    // A version mismatch would select OctoPrint's pre-2.0 schemas instead.
+    expect(await page.evaluate(() => OctoPrint.options.apiVersion.startsWith("2."))).toBeTruthy();
+});

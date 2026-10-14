@@ -49,23 +49,39 @@ class LocalCiContractTests(unittest.TestCase):
             for step in self.steps
             if step.get("uses", "").startswith("didlawowo/workflow-ci/")
         ]
-        self.assertGreaterEqual(len(actions), 4)
+        self.assertGreaterEqual(len(actions), 2)
         self.assertEqual(
             {action.rsplit("@", 1)[1] for action in actions}, {SHARED_REVISION}
         )
 
     def test_core_discovery_and_required_junit_evidence_are_preserved(self):
         step = next(
-            step for step in self.steps if "/run-python-tests@" in step.get("uses", "")
+            step for step in self.jobs["test"]["steps"]
+            if ".venv/bin/python -m pytest" in step.get("run", "")
         )
-        command = step["with"]["test-command"]
-        self.assertIn("--extra develop", command)
-        self.assertIn("python -m pytest", command)
+        command = step["run"]
         self.assertIn("--junitxml=coverage-reports/pytest-report.xml", command)
         self.assertIn("--cov-report=xml:coverage-reports/coverage.xml", command)
         self.assertNotIn("--ignore", command)
         self.assertNotIn("-o addopts", command)
         self.assertNotIn("continue-on-error", step)
+        evidence = next(
+            step for step in self.jobs["test"]["steps"]
+            if step.get("with", {}).get("name") == "atelier-python-results"
+        )
+        self.assertEqual(evidence["if"], "always()")
+
+    def test_python_311_ci_is_isolated_from_cross_version_uv_resolution(self):
+        for job in ("test", "browser"):
+            commands = "\n".join(
+                step.get("run", "") for step in self.jobs[job]["steps"]
+            )
+            self.assertIn("uv venv --no-project --python 3.11 .venv", commands)
+            self.assertIn('uv pip install --python .venv/bin/python --editable ".[develop]"', commands)
+            self.assertNotIn("uv sync", commands)
+            self.assertNotIn("uv run", commands)
+        self.assertIn(".venv/bin/task pi:test", self.source)
+        self.assertIn(".venv/bin/python -m build", self.source)
 
     def test_no_sd_build_flash_or_hardware_command_is_executed(self):
         commands = "\n".join(step.get("run", "") for step in self.steps)

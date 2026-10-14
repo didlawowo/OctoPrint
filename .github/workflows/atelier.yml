@@ -48,28 +48,38 @@ jobs:
         with:
           node-version: "22"
           working-directory: tests/playwright
+      # uv sync resolves every supported Python version, including optional docs
+      # dependencies incompatible with Python 3.10. Avoid narrowing OctoPrint's
+      # declared support just to satisfy an isolated CI run on Python 3.11.
+      - name: Prepare isolated Python 3.11 and fork extras with uv pip
+        run: |
+          uv python install 3.11
+          uv venv --no-project --python 3.11 .venv
+          uv pip install --python .venv/bin/python --editable ".[develop]" pytest-cov build pip
+          echo "$GITHUB_WORKSPACE/.venv/bin" >> "$GITHUB_PATH"
       - name: Core Python suite, doctests and JUnit evidence
-        uses: didlawowo/workflow-ci/.github/actions/run-python-tests@b4688812f0262a7cd385f2ae729dca9b2f0e1e85 # v1.18.3
-        with:
-          python-version: "3.11"
-          upload-coverage: "false"
-          fail-on-coverage: "false"
-          # OctoPrint uses the develop extra, not the shared action's dev default.
-          # Keep pytest.ini discovery (src + tests), including the core doctests.
-          test-command: >-
-            uv run --extra develop --with pytest-cov python -m pytest
-            --junitxml=coverage-reports/pytest-report.xml
-            --cov=octoprint --cov-report=xml:coverage-reports/coverage.xml
+        run: |
+          mkdir -p coverage-reports
+          .venv/bin/python -m pytest \
+            --junitxml=coverage-reports/pytest-report.xml \
+            --cov=octoprint --cov-report=xml:coverage-reports/coverage.xml \
             --cov-report=term-missing
+      - name: Save test evidence on failure
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: atelier-python-results
+          path: coverage-reports/
+          retention-days: 7
       - name: Taskfile and hardware-free Pi and dashboard tests
         run: |
-          uv run --extra develop task --list
-          uv run --extra develop task pi:test
+          .venv/bin/task --list
+          .venv/bin/task pi:test
       - name: Build translated Python distributions, not an SD image
         run: |
-          uv run --extra develop task babel-compile
-          uv run --extra develop task babel-bundle
-          uv run --extra develop --with build --with pip python -m build --sdist --wheel
+          .venv/bin/task babel-compile
+          .venv/bin/task babel-bundle
+          .venv/bin/python -m build --sdist --wheel
       - name: Save Python distributions
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
@@ -91,13 +101,11 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - uses: didlawowo/workflow-ci/.github/actions/setup-python-env@b4688812f0262a7cd385f2ae729dca9b2f0e1e85 # v1.18.3
-        with:
-          python-version: "3.11"
-      - name: Prepare the OctoPrint runtime
+      - name: Prepare the OctoPrint runtime with uv pip
         run: |
-          uv sync --extra develop
-          uv pip install --python .venv/bin/python pip
+          uv python install 3.11
+          uv venv --no-project --python 3.11 .venv
+          uv pip install --python .venv/bin/python --editable ".[develop]" pip
           echo "$GITHUB_WORKSPACE/.venv/bin" >> "$GITHUB_PATH"
       - uses: didlawowo/workflow-ci/.github/actions/setup-node-env@b4688812f0262a7cd385f2ae729dca9b2f0e1e85 # v1.18.3
         with:
