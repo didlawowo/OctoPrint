@@ -33,7 +33,7 @@ class ForkVersionTests(unittest.TestCase):
         for branch in (BRANCH, V2_BRANCH):
             with self.subTest(branch=branch):
                 overrides = {
-                    "_get_branch": lambda: branch,
+                    "_get_branch": lambda branch=branch: branch,
                     "_get_long": lambda: COMMIT,
                     "_get_short": lambda: COMMIT[:8],
                     "_get_tag": lambda: "2.0.0rc6",
