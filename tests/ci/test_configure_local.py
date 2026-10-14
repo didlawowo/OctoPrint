@@ -113,6 +113,8 @@ class NativeProvisioningTests(unittest.TestCase):
             self.assertEqual(config["accessControl"]["autologinAs"], "atelier")
             self.assertEqual(config["accessControl"]["localNetworks"], list(configure.LOCAL))
             self.assertFalse(config["plugins"]["tracking"]["enabled"])
+            self.assertTrue(config["printerConnection"]["autoconnect"])
+            self.assertEqual(config["printerConnection"]["preferred"]["connector"], "serial")
             self.assertNotIn(credentials["password"], first.stdout + first.stderr)
             self.assertNotIn(credentials["password"].encode(), users_before)
             second = self.run_configure(directory)
