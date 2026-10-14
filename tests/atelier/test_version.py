@@ -16,12 +16,15 @@ class ForkVersionTests(unittest.TestCase):
         data = runpy.run_path(str(SOURCE))
         for branch in (BRANCH, "origin/" + BRANCH):
             rules = [
-                item for item in data["BRANCH_VERSIONS"]
+                item
+                for item in data["BRANCH_VERSIONS"]
                 if any(re.fullmatch(p, branch) for p in item["patterns"])
             ]
             self.assertEqual(len(rules), 1)
             self.assertEqual(rules[0]["tag"], "2.0.0rc6")
-            self.assertEqual(rules[0]["commit"], "75fef2506e6f4ce62b4b4e6eb6810ea67833622a")
+            self.assertEqual(
+                rules[0]["commit"], "75fef2506e6f4ce62b4b4e6eb6810ea67833622a"
+            )
 
     def test_git_checkout_identifies_fork_without_claiming_a_final_release(self):
         data = runpy.run_path(str(SOURCE))
@@ -45,7 +48,11 @@ class ForkVersionTests(unittest.TestCase):
             f"(origin/{BRANCH})",
             f"(HEAD -> {BRANCH}, origin/{BRANCH})",
         ):
-            text = SOURCE.read_text().replace("$Format:%d$", refs).replace("$Format:%H$", COMMIT)
+            text = (
+                SOURCE.read_text()
+                .replace("$Format:%d$", refs)
+                .replace("$Format:%H$", COMMIT)
+            )
             data = {"__file__": str(SOURCE), "__name__": "version_test"}
             exec(compile(text, str(SOURCE), "exec"), data)
             result = data["_get_data_from_keywords"]()
@@ -53,7 +60,11 @@ class ForkVersionTests(unittest.TestCase):
             self.assertEqual(result["revision"], COMMIT)
 
     def test_real_upstream_tag_retains_its_release_version(self):
-        text = SOURCE.read_text().replace("$Format:%d$", "(tag: 2.0.0rc6)").replace("$Format:%H$", COMMIT)
+        text = (
+            SOURCE.read_text()
+            .replace("$Format:%d$", "(tag: 2.0.0rc6)")
+            .replace("$Format:%H$", COMMIT)
+        )
         data = {"__file__": str(SOURCE), "__name__": "version_test"}
         exec(compile(text, str(SOURCE), "exec"), data)
         self.assertEqual(data["_get_data_from_keywords"]()["version"], "2.0.0rc6")
