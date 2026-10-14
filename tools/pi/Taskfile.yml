@@ -2,18 +2,37 @@ version: "3"
 
 vars:
   IMAGE: build/atelier-pi/octopi-atelier.img
+  BUILD_MODE: auto
+  BUILD_HOST: nvidia
+  BUILD_COMMITTED: "0"
 
 tasks:
   prepare:
-    desc: Vérifier les prérequis du build SD (Linux x86_64, Docker, Git, 20 Gio)
+    desc: Vérifier le builder Linux local ou SSH (automatiquement nvidia depuis macOS)
+    env:
+      ATELIER_BUILD_MODE: "{{.BUILD_MODE}}"
+      ATELIER_BUILD_HOST: "{{.BUILD_HOST}}"
     cmds:
-      - python3 tools/pi/image.py prepare
+      - python3 tools/pi/remote.py prepare --mode "$ATELIER_BUILD_MODE" --host "$ATELIER_BUILD_HOST"
   build:
-    desc: Construire une vraie image OctoPi contenant le commit courant et la traduction FR
+    desc: Construire l'image SD et la rapatrier (SSH nvidia depuis macOS)
+    env:
+      ATELIER_BUILD_MODE: "{{.BUILD_MODE}}"
+      ATELIER_BUILD_HOST: "{{.BUILD_HOST}}"
+      ATELIER_BUILD_COMMITTED: "{{.BUILD_COMMITTED}}"
     cmds:
-      - python3 tools/pi/image.py build
+      - |
+        set -- --mode "$ATELIER_BUILD_MODE" --host "$ATELIER_BUILD_HOST"
+        if [ "$ATELIER_BUILD_COMMITTED" = "1" ]; then
+          set -- "$@" --committed
+        fi
+        python3 tools/pi/remote.py build "$@"
+  fetch:
+    desc: Rapatrier à nouveau l'image du dernier build SSH terminé, sans reconstruire
+    cmds:
+      - python3 tools/pi/remote.py fetch
   flash:
-    desc: Ouvrir l’image dans Raspberry Pi Imager pour configurer et flasher la SD
+    desc: Ouvrir l'image locale dans Raspberry Pi Imager pour flasher la SD de ce poste
     env:
       ATELIER_IMAGE: "{{.IMAGE}}"
     cmds:
@@ -41,7 +60,7 @@ tasks:
     cmds:
       - sudo -- python3 tools/pi/sdcard.py --image "$ATELIER_IMAGE" --device "$ATELIER_DEVICE"
   test:
-    desc: Tests des protections SD et du tableau de bord (aucun matériel requis)
+    desc: Tests des protections SD, du build SSH et du tableau de bord (sans matériel)
     cmds:
       - python3 -m unittest discover -s tests/atelier -p 'test_*.py' -v
       - node --test tests/atelier/atelier.test.cjs
