@@ -17,7 +17,16 @@ COMMIT = "a" * 40
 class ForkVersionTests(unittest.TestCase):
     def test_fork_rule_pins_release_and_exact_upstream_commit(self):
         data = runpy.run_path(str(SOURCE))
-        for branch in (BRANCH, "origin/" + BRANCH, V2_BRANCH, "origin/" + V2_BRANCH, MOBILE_BRANCH, "origin/" + MOBILE_BRANCH, MAIN_BRANCH, "origin/" + MAIN_BRANCH):
+        for branch in (
+            BRANCH,
+            "origin/" + BRANCH,
+            V2_BRANCH,
+            "origin/" + V2_BRANCH,
+            MOBILE_BRANCH,
+            "origin/" + MOBILE_BRANCH,
+            MAIN_BRANCH,
+            "origin/" + MAIN_BRANCH,
+        ):
             rules = [
                 item
                 for item in data["BRANCH_VERSIONS"]
