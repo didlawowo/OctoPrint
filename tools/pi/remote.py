@@ -19,11 +19,16 @@ import image
 REPOSITORY = "https://github.com/didlawowo/OctoPrint.git"
 SSH_OPTIONS = [
     "-T",
-    "-o", "BatchMode=yes",
-    "-o", "ConnectTimeout=10",
-    "-o", "ServerAliveInterval=15",
-    "-o", "ServerAliveCountMax=4",
-    "-o", "ForwardAgent=no",
+    "-o",
+    "BatchMode=yes",
+    "-o",
+    "ConnectTimeout=10",
+    "-o",
+    "ServerAliveInterval=15",
+    "-o",
+    "ServerAliveCountMax=4",
+    "-o",
+    "ForwardAgent=no",
 ]
 ARTIFACTS = ("octopi-atelier.img", "octopi-atelier.img.sha256", "build.json")
 RECEIPT = "remote-build.json"
@@ -51,12 +56,18 @@ PYCHECK
 def target(mode: str, host: str) -> str:
     if mode == "local":
         return "local"
-    if mode == "auto" and sys.platform == "linux" and platform.machine().lower() in {
-        "x86_64", "amd64"
-    }:
+    if (
+        mode == "auto"
+        and sys.platform == "linux"
+        and platform.machine().lower() in {"x86_64", "amd64"}
+    ):
         return "local"
-    if not isinstance(host, str) or not re.fullmatch(r"[A-Za-z0-9_][A-Za-z0-9_.@-]*", host):
-        raise ValueError("BUILD_HOST doit être un alias SSH ou utilisateur@hôte, sans options.")
+    if not isinstance(host, str) or not re.fullmatch(
+        r"[A-Za-z0-9_][A-Za-z0-9_.@-]*", host
+    ):
+        raise ValueError(
+            "BUILD_HOST doit être un alias SSH ou utilisateur@hôte, sans options."
+        )
     return host
 
 
@@ -64,7 +75,9 @@ def ssh(host: str, script: str, *, capture: bool = False, output=None):
     # Quote all remote arguments too: OpenSSH invokes a shell on the other end.
     command = ["ssh", *SSH_OPTIONS, host, shlex.join(["sh", "-c", script])]
     result = subprocess.run(
-        command, check=True, stdout=subprocess.PIPE if capture else output,
+        command,
+        check=True,
+        stdout=subprocess.PIPE if capture else output,
         text=output is None,
     )
     return result.stdout.strip() if capture else None
@@ -83,7 +96,10 @@ def source(committed: bool) -> tuple[str, str]:
                 "ou utiliser BUILD_COMMITTED=1 pour construire uniquement HEAD "
                 "sans les envoyer ni les supprimer."
             )
-        print("Attention : construction du commit HEAD uniquement ; changements locaux exclus.", flush=True)
+        print(
+            "Attention : construction du commit HEAD uniquement ; changements locaux exclus.",
+            flush=True,
+        )
     return commit, branch
 
 
@@ -91,12 +107,16 @@ def validate_receipt(data: dict) -> dict:
     if not isinstance(data, dict):
         raise ValueError("Métadonnées du build distant invalides.")
     target("ssh", data.get("host", ""))
-    if not isinstance(data.get("commit"), str) or not re.fullmatch(r"[0-9a-f]{40}", data["commit"]):
+    if not isinstance(data.get("commit"), str) or not re.fullmatch(
+        r"[0-9a-f]{40}", data["commit"]
+    ):
         raise ValueError("Commit distant invalide.")
     path = data.get("directory", "")
     if (
-        not isinstance(path, str) or not path.startswith("/")
-        or any(ord(c) < 32 for c in path) or ".." in Path(path).parts
+        not isinstance(path, str)
+        or not path.startswith("/")
+        or any(ord(c) < 32 for c in path)
+        or ".." in Path(path).parts
         or not Path(path).name.startswith("build-")
     ):
         raise ValueError("Répertoire du build distant invalide.")
@@ -113,15 +133,23 @@ def fetch(data: dict) -> None:
         for name in ARTIFACTS:
             print(f"Rapatriement : {name}", flush=True)
             with (staged / name).open("wb") as stream:
-                ssh(data["host"], shlex.join(["cat", remote_output + name]), output=stream)
+                ssh(
+                    data["host"], shlex.join(["cat", remote_output + name]), output=stream
+                )
         digest = image.verify_image(staged / ARTIFACTS[0])
         metadata = json.loads((staged / "build.json").read_text(encoding="utf-8"))
-        if metadata.get("commit") != data["commit"] or metadata.get("image_sha256") != digest:
+        if (
+            metadata.get("commit") != data["commit"]
+            or metadata.get("image_sha256") != digest
+        ):
             raise RuntimeError("Image reçue non conforme au commit ou au SHA256 annoncé.")
         for name in ARTIFACTS:
             (staged / name).replace(image.OUTPUT / name)
         image.write_manifest(image.IMAGE, digest)
-    print(f"Image vérifiée sur ce poste : {image.IMAGE}\nFlasher ici : task pi:flash", flush=True)
+    print(
+        f"Image vérifiée sur ce poste : {image.IMAGE}\nFlasher ici : task pi:flash",
+        flush=True,
+    )
 
 
 def remote_build(host: str, committed: bool) -> None:
@@ -139,18 +167,34 @@ def remote_build(host: str, committed: bool) -> None:
     directory = ssh(host, shlex.join(["python3", "-c", create]), capture=True)
     data = validate_receipt({"host": host, "directory": directory, "commit": commit})
     image.OUTPUT.mkdir(parents=True, exist_ok=True)
-    (image.OUTPUT / RECEIPT).write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+    (image.OUTPUT / RECEIPT).write_text(
+        json.dumps(data, indent=2) + "\n", encoding="utf-8"
+    )
     checkout = directory + "/source"
-    script = "\n".join([
-        "set -eu",
-        shlex.join(["git", "clone", "--filter=blob:none", "--no-checkout", REPOSITORY, checkout]),
-        "cd " + shlex.quote(checkout),
-        shlex.join(["git", "fetch", "--tags", "origin", commit]),
-        shlex.join(["git", "checkout", "-B", branch, commit]),
-        'test "$(git rev-parse HEAD)" = ' + shlex.quote(commit),
-        "exec env PYTHONUNBUFFERED=1 python3 tools/pi/image.py build",
-    ])
-    print(f"Dossier distant isolé : {directory}\nLe commit doit être poussé sur le fork.", flush=True)
+    script = "\n".join(
+        [
+            "set -eu",
+            shlex.join(
+                [
+                    "git",
+                    "clone",
+                    "--filter=blob:none",
+                    "--no-checkout",
+                    REPOSITORY,
+                    checkout,
+                ]
+            ),
+            "cd " + shlex.quote(checkout),
+            shlex.join(["git", "fetch", "--tags", "origin", commit]),
+            shlex.join(["git", "checkout", "-B", branch, commit]),
+            'test "$(git rev-parse HEAD)" = ' + shlex.quote(commit),
+            "exec env PYTHONUNBUFFERED=1 python3 tools/pi/image.py build",
+        ]
+    )
+    print(
+        f"Dossier distant isolé : {directory}\nLe commit doit être poussé sur le fork.",
+        flush=True,
+    )
     try:
         ssh(host, script)
         fetch(data)

@@ -135,7 +135,7 @@
 .atelier-ui.atelier-advanced #tabs > li { float: none; }
 .atelier-ui.atelier-advanced #tabs a { min-height: 44px; border-radius: 8px; border-color: transparent; }
 .atelier-ui.atelier-advanced #tabs .active a { background: #173b54; color: var(--atelier-blue); border-color: var(--atelier-border); }
-.atelier-ui.atelier-advanced #sidebar { display: block; width: 100%; float: none; margin: 0 0 18px; }
+.atelier-ui.atelier-advanced #sidebar { display: none; }
 .atelier-connection-backdrop, #atelier-close-connection { display: none; }
 .atelier-ui.atelier-connection-open .atelier-connection-backdrop { display: block; position: fixed; inset: 0; background: #0009; z-index: 1038; }
 .atelier-ui.atelier-connection-open #sidebar { display: block; position: fixed; z-index: 1039; top: 80px; right: 20px; width: min(400px, calc(100vw - 40px)); max-height: calc(100dvh - 180px); overflow: auto; margin: 0; float: none; }
@@ -180,3 +180,289 @@
     .atelier-ui .modal .form-horizontal .controls { margin-left: 0; }
 }
 @media (prefers-reduced-motion: reduce) { .atelier-progress span { transition: none; } }
+
+
+/* V2 polish from first Raspberry Pi field test. */
+.atelier-ui .alert {
+    background: #2b2415;
+    border: 1px solid #6d5a29;
+    color: #ffe4a3;
+    border-radius: 12px;
+    text-shadow: none;
+}
+.atelier-ui .alert-error,
+.atelier-ui .alert-danger {
+    background: #3a2028;
+    border-color: #81505b;
+    color: #ffd2d7;
+}
+.atelier-ui label.checkbox,
+.atelier-ui label.radio,
+.atelier-ui .checkbox,
+.atelier-ui .radio {
+    min-height: 24px;
+    line-height: 1.4;
+}
+.atelier-ui label.checkbox,
+.atelier-ui label.radio {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+.atelier-ui label.checkbox > input[type="checkbox"],
+.atelier-ui label.radio > input[type="radio"],
+.atelier-ui .controls label.checkbox > input[type="checkbox"],
+.atelier-ui .controls label.radio > input[type="radio"] {
+    position: static;
+    float: none;
+    flex: 0 0 auto;
+    margin: 3px 0 0;
+    width: 16px;
+    height: 16px;
+}
+.atelier-ui .input-append,
+.atelier-ui .input-prepend {
+    display: inline-flex;
+    align-items: stretch;
+    max-width: 100%;
+}
+.atelier-ui .input-append input,
+.atelier-ui .input-prepend input {
+    min-width: 0;
+    height: 42px;
+    margin: 0;
+}
+.atelier-ui .input-append .add-on,
+.atelier-ui .input-prepend .add-on {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 42px;
+    line-height: 1;
+}
+.atelier-ui #temperature-table {
+    width: 100%;
+    table-layout: auto;
+}
+.atelier-ui #temperature-table .temperature_target form,
+.atelier-ui #temperature-table .temperature_offset form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+.atelier-ui #temperature-table input.input-mini {
+    width: 64px !important;
+}
+
+/* Setup wizard fallback: normally V2 provisions before OctoPrint starts, but any
+   future upstream wizard still matches the Atelier shell instead of Bootstrap 2. */
+.atelier-ui #wizard_dialog {
+    width: min(920px, calc(100vw - 32px));
+    max-height: min(760px, calc(100dvh - 32px));
+    margin: 0;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    border: 1px solid var(--atelier-border);
+    border-radius: 18px;
+    overflow: hidden;
+    background: var(--atelier-panel);
+}
+.atelier-ui #wizard_dialog .modal-header {
+    padding: 18px 22px;
+    background: #111c26;
+}
+.atelier-ui #wizard_dialog .modal-header h3 {
+    margin: 0;
+    font-size: 20px;
+}
+.atelier-ui #wizard_dialog .modal-body {
+    max-height: calc(100dvh - 190px);
+    padding: 18px;
+    overflow: auto;
+}
+.atelier-ui #wizard_dialog_menu {
+    width: 220px;
+    margin: 0 18px 0 0;
+}
+.atelier-ui #wizardTabs {
+    padding: 0;
+}
+.atelier-ui #wizardTabs > li > a {
+    border-radius: 9px;
+    color: var(--atelier-muted);
+    padding: 10px 12px;
+}
+.atelier-ui #wizardTabs > li.active > a {
+    background: #173b54;
+    color: var(--atelier-blue);
+}
+.atelier-ui #wizard_dialog_content {
+    width: calc(100% - 238px);
+    margin: 0;
+}
+.atelier-ui #wizard_dialog + .modal-footer,
+.atelier-ui #wizard_dialog .modal-footer {
+    background: #111c26;
+    border-color: var(--atelier-border);
+}
+
+/* Advanced/native views should use the full screen. The connection/sidebar is
+   available only through Atelier's dedicated connection drawer. */
+.atelier-ui.atelier-advanced .octoprint-container {
+    max-width: 1180px;
+}
+.atelier-ui.atelier-advanced #tabs_content {
+    min-width: 0;
+}
+.atelier-ui #control,
+.atelier-ui #temp {
+    overflow: hidden;
+}
+
+@media (max-width: 900px) {
+    .atelier-ui .octoprint-container {
+        padding: 12px 10px;
+    }
+    .atelier-heading {
+        margin-bottom: 12px;
+    }
+    .atelier-printer-icon {
+        width: 44px;
+        height: 44px;
+        flex-basis: 44px;
+        border-radius: 13px;
+        font-size: 20px;
+    }
+    .atelier-heading h1 {
+        font-size: 21px;
+    }
+    .atelier-status {
+        min-height: 40px;
+        padding: 8px 11px;
+    }
+    .atelier-grid {
+        gap: 12px;
+    }
+    .atelier-card {
+        padding: 14px;
+        border-radius: 14px;
+    }
+    .atelier-card-heading {
+        margin-bottom: 11px;
+    }
+    .atelier-job-content {
+        margin-bottom: 12px;
+        gap: 10px;
+    }
+    .atelier-model-icon {
+        width: 52px;
+        height: 56px;
+        flex-basis: 52px;
+        font-size: 25px;
+    }
+    .atelier-job-description h3 {
+        font-size: 16px;
+    }
+    .atelier-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+    .atelier-actions > .atelier-button {
+        width: 100%;
+        min-height: 44px;
+        padding: 9px 10px;
+    }
+    .atelier-heaters {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+    .atelier-heater {
+        padding: 11px;
+    }
+    .atelier-heater > strong {
+        font-size: 24px;
+        margin-top: 5px;
+    }
+    .atelier-heater svg {
+        height: 28px;
+        margin-top: 7px;
+    }
+    .atelier-hint {
+        margin-top: 8px;
+    }
+
+    .atelier-ui #control {
+        padding: 12px;
+    }
+    .atelier-ui #control > .jog-panel,
+    .atelier-ui #control #control-jog-extrusion,
+    .atelier-ui #control #control-jog-general {
+        float: none !important;
+        width: 100% !important;
+        max-width: none;
+        margin: 0 0 12px !important;
+    }
+    .atelier-ui #control > .jog-panel {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        align-items: start;
+    }
+    .atelier-ui #control #control-jog-xy,
+    .atelier-ui #control #control-jog-z,
+    .atelier-ui #control #control-jog-feedrate,
+    .atelier-ui #control .distance {
+        float: none !important;
+        width: auto !important;
+        margin: 0 !important;
+    }
+    .atelier-ui #control .btn.box {
+        width: 48px;
+        height: 48px;
+        margin: 2px;
+    }
+
+    .atelier-ui #wizard_dialog_menu,
+    .atelier-ui #wizard_dialog_content {
+        float: none;
+        width: 100%;
+        margin: 0;
+    }
+    .atelier-ui #wizardTabs {
+        display: flex;
+        gap: 6px;
+        overflow-x: auto;
+        margin-bottom: 14px;
+    }
+    .atelier-ui #wizardTabs > li {
+        flex: 0 0 auto;
+    }
+}
+
+@media (max-width: 520px) {
+    .atelier-status {
+        width: 100%;
+    }
+    .atelier-actions {
+        grid-template-columns: 1fr;
+    }
+    .atelier-heaters {
+        grid-template-columns: 1fr 1fr;
+    }
+    .atelier-ui #control > .jog-panel {
+        grid-template-columns: 1fr;
+    }
+    .atelier-ui #temperature-graph {
+        min-height: 180px;
+    }
+    .atelier-ui #temperature-table {
+        font-size: 13px;
+    }
+    .atelier-ui #temperature-table th,
+    .atelier-ui #temperature-table td {
+        padding: 6px 4px;
+    }
+}

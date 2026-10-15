@@ -29,7 +29,9 @@ def networks(value):
             network.version == parent.version and network.subnet_of(parent)
             for parent in PRIVATE
         ):
-            raise ValueError("Auto-login requires localhost or an explicit private subnet")
+            raise ValueError(
+                "Auto-login requires localhost or an explicit private subnet"
+            )
         if str(network) not in result:
             result.append(str(network))
     return result
@@ -146,7 +148,9 @@ def provision(basedir, preset_path, username=None, network_list=""):
         if username:
             candidates = [u for u in candidates if u.get_id() == username]
         if len(candidates) != 1:
-            raise ValueError("Select one existing active administrator with LOCAL_USER=...")
+            raise ValueError(
+                "Select one existing active administrator with LOCAL_USER=..."
+            )
         username = candidates[0].get_id()
     else:
         username = username or "atelier"
@@ -181,7 +185,9 @@ def provision(basedir, preset_path, username=None, network_list=""):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--basedir", required=True, type=Path)
-    parser.add_argument("--preset", type=Path, default=ROOT / "configs/atelier-local.yaml")
+    parser.add_argument(
+        "--preset", type=Path, default=ROOT / "configs/atelier-local.yaml"
+    )
     parser.add_argument("--user", default="")
     parser.add_argument("--networks", default="")
     args = parser.parse_args()

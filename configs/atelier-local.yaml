@@ -14,3 +14,10 @@ plugins:
 feature:
   printStartConfirmation: true
   printCancelConfirmation: true
+printerConnection:
+  autoconnect: true
+  preferred:
+    connector: serial
+    parameters:
+      port: null
+      baudrate: null

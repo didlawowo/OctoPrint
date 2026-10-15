@@ -1,0 +1,10 @@
+[Unit]
+Description=Provision OctoPrint Atelier before first server start
+After=network-online.target
+Wants=network-online.target
+Before=octoprint.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/atelier-firstboot
+RemainAfterExit=yes

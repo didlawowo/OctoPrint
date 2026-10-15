@@ -106,13 +106,21 @@ class NativeProvisioningTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             directory = Path(tmp)
             first = self.run_configure(directory)
-            credentials = yaml.safe_load((directory / "atelier-credentials.yaml").read_text())
+            credentials = yaml.safe_load(
+                (directory / "atelier-credentials.yaml").read_text()
+            )
             users_before = (directory / "users.yaml").read_bytes()
             config = yaml.safe_load((directory / "config.yaml").read_text())
             self.assertFalse(config["server"]["firstRun"])
             self.assertEqual(config["accessControl"]["autologinAs"], "atelier")
-            self.assertEqual(config["accessControl"]["localNetworks"], list(configure.LOCAL))
+            self.assertEqual(
+                config["accessControl"]["localNetworks"], list(configure.LOCAL)
+            )
             self.assertFalse(config["plugins"]["tracking"]["enabled"])
+            self.assertTrue(config["printerConnection"]["autoconnect"])
+            self.assertEqual(
+                config["printerConnection"]["preferred"]["connector"], "serial"
+            )
             self.assertNotIn(credentials["password"], first.stdout + first.stderr)
             self.assertNotIn(credentials["password"].encode(), users_before)
             second = self.run_configure(directory)
@@ -132,7 +140,9 @@ class NativeProvisioningTests(unittest.TestCase):
             self.run_configure(directory)
             config = yaml.safe_load((directory / "config.yaml").read_text())
             self.assertEqual(config["appearance"]["name"], "Existing machine")
-            self.assertEqual(config["plugins"]["classicwebcam"]["stream"], "/existing-camera")
+            self.assertEqual(
+                config["plugins"]["classicwebcam"]["stream"], "/existing-camera"
+            )
             self.assertEqual(config["printerProfiles"]["default"], "my_existing_profile")
             self.assertTrue(list(directory.glob("config.yaml.before-atelier-*")))
 
