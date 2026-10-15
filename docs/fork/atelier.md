@@ -1,26 +1,27 @@
 # Atelier : interface mobile/tablette et SD de test
 
-Cette branche ajoute un tableau de bord sombre, tactile et français au fork
-OctoPrint. Il est activé par défaut ; `?classic=1` retrouve l'interface historique.
-Le code part de `feat/translate-fr`, elle-même basée sur **OctoPrint dev** : ce n'est
-pas une release stable officielle. Utiliser une **seconde carte SD** pour tester
+La branche `main` du fork ajoute un tableau de bord sombre, tactile et français.
+Il est activé par défaut ; `?classic=1` retrouve l'interface historique.
+Le code dérive d'**OctoPrint 2.0.0rc6 épinglé**, et non de la branche `dev` upstream :
+ce n'est pas une release stable officielle. Utiliser une **seconde carte SD** pour tester
 et conserver la carte actuelle intacte. Le flash efface entièrement la cible.
 
 ## Construire l'image pour le Raspberry Pi 4
 
-Sur un hôte **Linux x86_64** avec Python 3.10+, Git, Docker accessible à
-l'utilisateur, Go Task v3 et au moins **20 Gio libres** :
+Sur le Mac (build délégué automatiquement à `ssh nvidia`) ou un hôte
+**Linux x86_64** avec Python 3.10+, Git, Docker accessible à
+l'utilisateur, Go Task v3 et au moins **20 Gio libres** côté builder :
 
 ```sh
-git clone --branch feat/atelier-mobile-tablet https://github.com/didlawowo/OctoPrint.git
+git clone --branch main https://github.com/didlawowo/OctoPrint.git
 cd OctoPrint
 task pi:prepare
 task pi:test  # nécessite aussi Node.js >= 18
 task pi:build
 ```
 
-Dans un clone existant : `git fetch origin`, puis
-`git switch --track origin/feat/atelier-mobile-tablet`.
+Dans un clone existant : `git fetch origin`, puis `git switch main`
+(ou `git switch --track origin/main` si la branche locale n'existe pas).
 
 `task build` garde son rôle amont : construire le package Python. **La tâche SD
 est `task pi:build`.** Le checkout doit être propre : le builder embarque
@@ -78,16 +79,21 @@ task pi:flash IMAGE=/chemin/octopi-atelier.img
 ```
 
 Le catalogue est régénéré pour ce chemin local. `RPI_IMAGER` permet de spécifier
-l'exécutable s'il n'est pas dans le PATH. Le build n'est pas pris en charge sur
-macOS/Windows ; le lancement d'Imager est prévu pour Linux/macOS et un Python
+l'exécutable s'il n'est pas dans le PATH. Le build local direct n'est pas pris en charge sur macOS/Windows ; macOS
+utilise `ssh nvidia` pour le build. Le lancement d'Imager est prévu pour Linux/macOS et un Python
 local compatible. Sur Windows, utiliser directement Imager et son catalogue
 local ou une image personnalisée ; vérifier que les options de personnalisation
 sont effectivement proposées avant de faire un démarrage sans écran.
 
 Éteindre le Pi avant de changer de SD. Pour le premier essai, laisser l'USB de
 l'imprimante débranché, attendre le démarrage, puis ouvrir
-`http://octopi-atelier.local/`. Terminer l'assistant OctoPrint et créer le compte
-administrateur. Tester l'interface avant de reconnecter une imprimante au repos.
+`http://octopi-atelier.local/`. Le service Atelier du premier démarrage crée
+un compte administrateur avec un secret aléatoire propre à la SD, et termine
+l'assistant. Les identifiants de secours se trouvent dans le répertoire OctoPrint
+de l'utilisateur Pi, fichier privé `atelier-credentials.yaml` (mode 0600).
+**Attention : les sous-réseaux privés détectés au démarrage sont autorisés pour
+l'AutoLogin administrateur.** Ne pas exposer OctoPi à un réseau non fiable.
+Tester l'interface avant de reconnecter une imprimante au repos.
 
 ## Flash brut Linux, facultatif
 
