@@ -1,7 +1,7 @@
 const {test, expect} = require("../fixtures");
 
 // Read-only UI tests. Never connect a printer, send G-code, start a job or flash a disk.
-for (const width of [360, 390, 768, 1024, 1366]) {
+for (const width of [320, 360, 390, 430, 768, 1024, 1366]) {
     test(`Atelier layout and navigation at ${width}px`, async ({
         page,
         loginApi,
@@ -27,6 +27,51 @@ for (const width of [360, 390, 768, 1024, 1366]) {
                     () => document.documentElement.scrollWidth <= innerWidth + 1
                 )
             ).toBeTruthy();
+        }
+        if (width <= 759) {
+            const navbar = page.locator("#navbar");
+            const navSize = await navbar.boundingBox();
+            expect(navSize).not.toBeNull();
+            expect(navSize.height).toBeLessThanOrEqual(80);
+            expect(navSize.x).toBeGreaterThanOrEqual(-1);
+            expect(navSize.x + navSize.width).toBeLessThanOrEqual(width + 1);
+
+            await page.getByTestId("atelier-nav-control").click();
+            const overflow = await page.evaluate(() => {
+                const ids = [
+                    "#webcam_plugins_container",
+                    "#control-jog-xy",
+                    "#control-jog-z",
+                    "#control-jog-extrusion",
+                    "#control-jog-general",
+                    "#jog_distance"
+                ];
+                return ids
+                    .map((id) => document.querySelector(id))
+                    .filter(
+                        (el) =>
+                            el &&
+                            el.getClientRects().length &&
+                            getComputedStyle(el).visibility !== "hidden"
+                    )
+                    .filter((el) => {
+                        const box = el.getBoundingClientRect();
+                        return box.left < -1 || box.right > innerWidth + 1;
+                    })
+                    .map((el) => el.id);
+            });
+            expect(overflow).toEqual([]);
+
+            // Native account menu previously rendered outside the left edge
+            // on iPhone. Test the actual popup, not only scrollWidth.
+            await page.locator("#navbar_login > a").click();
+            const accountMenu = page.locator("#login_dropdown_loggedin");
+            await expect(accountMenu).toBeVisible();
+            const menu = await accountMenu.boundingBox();
+            expect(menu).not.toBeNull();
+            expect(menu.x).toBeGreaterThanOrEqual(0);
+            expect(menu.x + menu.width).toBeLessThanOrEqual(width + 1);
+            await page.locator("#navbar_login > a").click();
         }
         await page.getByTestId("atelier-nav-files").click();
         await expect(page.locator("#atelier-files-slot #files_wrapper")).toBeVisible();
