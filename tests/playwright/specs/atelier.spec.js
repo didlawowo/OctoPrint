@@ -135,3 +135,112 @@ test("Versioned API v2 contracts for connection and file storage", async ({
         await page.evaluate(() => OctoPrint.options.apiVersion.startsWith("2."))
     ).toBeTruthy();
 });
+
+
+/*
+ * Device-shaped regression recipes. The Redmi Pad 10.61 has a native
+ * 1200x2000 display; 800x1333 CSS px at 1.5x is a representative Android
+ * browser scaling preset, not a promise about the user's display-size setting.
+ * Safari and the physical tablet still need a final device check.
+ */
+const fieldDevices = [
+    {
+        name: "iPhone 17 portrait",
+        viewport: {width: 402, height: 874},
+        deviceScaleFactor: 3
+    },
+    {
+        name: "iPhone 17 landscape",
+        viewport: {width: 874, height: 402},
+        deviceScaleFactor: 3
+    },
+    {
+        name: "Redmi Pad 10.61 portrait",
+        viewport: {width: 800, height: 1333},
+        deviceScaleFactor: 1.5
+    },
+    {
+        name: "Redmi Pad 10.61 landscape",
+        viewport: {width: 1333, height: 800},
+        deviceScaleFactor: 1.5
+    }
+];
+
+for (const device of fieldDevices) {
+    test.describe(device.name, () => {
+        test.use({
+            viewport: device.viewport,
+            deviceScaleFactor: device.deviceScaleFactor,
+            isMobile: true,
+            hasTouch: true
+        });
+
+        test("navigation, native controls and menus fit the visual viewport", async ({
+            page,
+            loginApi,
+            ui
+        }, testInfo) => {
+            await loginApi.loginDefault();
+            await page.goto("/?l10n=fr");
+            await ui.coreHasLoaded();
+            await expect(page.locator("body")).toHaveClass(/atelier-ui/);
+
+            const assertFit = async () => {
+                const metrics = await page.evaluate(() => {
+                    const width = document.documentElement.clientWidth;
+                    const viewport = window.innerWidth;
+                    const controls = [
+                        "#navbar",
+                        "#control",
+                        "#webcam_plugins_container",
+                        "#control-jog-xy",
+                        "#control-jog-z",
+                        "#control-jog-extrusion",
+                        "#control-jog-general"
+                    ];
+                    const outliers = controls
+                        .map((selector) => document.querySelector(selector))
+                        .filter((node) => node && node.getClientRects().length)
+                        .map((node) => ({
+                            id: node.id,
+                            left: node.getBoundingClientRect().left,
+                            right: node.getBoundingClientRect().right
+                        }))
+                        .filter((rect) => rect.left < -1 || rect.right > viewport + 1);
+                    return {
+                        viewport,
+                        width,
+                        scrollWidth: document.documentElement.scrollWidth,
+                        outliers
+                    };
+                });
+                expect(metrics.viewport).toBe(device.viewport.width);
+                expect(metrics.scrollWidth).toBeLessThanOrEqual(metrics.viewport + 1);
+                expect(metrics.outliers).toEqual([]);
+            };
+
+            await assertFit();
+            await page.getByTestId("atelier-nav-control").click();
+            await expect(page.locator("#control")).toBeVisible();
+            await assertFit();
+
+            await page.locator("#navbar_login > a").click();
+            const loginMenu = page.locator("#login_dropdown_loggedin");
+            await expect(loginMenu).toBeVisible();
+            const bounds = await loginMenu.boundingBox();
+            expect(bounds).not.toBeNull();
+            expect(bounds.x).toBeGreaterThanOrEqual(-1);
+            expect(bounds.x + bounds.width).toBeLessThanOrEqual(device.viewport.width + 1);
+            await page.locator("#navbar_login > a").click();
+
+            await page.getByTestId("atelier-nav-home").click();
+            await assertFit();
+            await page.screenshot({
+                path: testInfo.outputPath(
+                    device.name.toLowerCase().replace(/[^a-z0-9]+/g, "-") + ".png"
+                ),
+                fullPage: true
+            });
+        });
+    });
+}
