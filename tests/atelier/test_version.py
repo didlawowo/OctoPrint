@@ -9,13 +9,14 @@ from unittest.mock import patch
 SOURCE = Path(__file__).resolve().parents[2] / "src/octoprint/_version.py"
 BRANCH = "feat/atelier-2.0-rc6"
 V2_BRANCH = "feat/atelier-v2"
+MOBILE_BRANCH = "fix/atelier-v2-mobile-overflow"
 COMMIT = "a" * 40
 
 
 class ForkVersionTests(unittest.TestCase):
     def test_fork_rule_pins_release_and_exact_upstream_commit(self):
         data = runpy.run_path(str(SOURCE))
-        for branch in (BRANCH, "origin/" + BRANCH, V2_BRANCH, "origin/" + V2_BRANCH):
+        for branch in (BRANCH, "origin/" + BRANCH, V2_BRANCH, "origin/" + V2_BRANCH, MOBILE_BRANCH, "origin/" + MOBILE_BRANCH):
             rules = [
                 item
                 for item in data["BRANCH_VERSIONS"]
@@ -30,7 +31,7 @@ class ForkVersionTests(unittest.TestCase):
     def test_git_checkout_identifies_fork_without_claiming_a_final_release(self):
         data = runpy.run_path(str(SOURCE))
         fn = data["_get_data_from_git"]
-        for branch in (BRANCH, V2_BRANCH):
+        for branch in (BRANCH, V2_BRANCH, MOBILE_BRANCH):
             with self.subTest(branch=branch):
                 overrides = {
                     "_get_branch": lambda branch=branch: branch,
@@ -53,6 +54,8 @@ class ForkVersionTests(unittest.TestCase):
             f"(HEAD -> {V2_BRANCH})",
             f"(origin/{V2_BRANCH})",
             f"(HEAD -> {V2_BRANCH}, origin/{V2_BRANCH})",
+            f"(HEAD -> {MOBILE_BRANCH})",
+            f"(origin/{MOBILE_BRANCH})",
         ):
             text = (
                 SOURCE.read_text()
