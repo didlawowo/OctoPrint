@@ -829,3 +829,25 @@
         max-height: 50dvh;
     }
 }
+
+/* iPhone 17 Safari: account for Dynamic Island and gesture edges in landscape.
+   The safe area is browser-managed; never hard-code notch dimensions. */
+@media (max-width: 759px) {
+    .atelier-ui #navbar .navbar-inner {
+        padding-left: max(8px, env(safe-area-inset-left));
+        padding-right: max(8px, env(safe-area-inset-right));
+    }
+    .atelier-ui .atelier-nav {
+        padding-left: max(8px, env(safe-area-inset-left));
+        padding-right: max(8px, env(safe-area-inset-right));
+    }
+}
+@media (min-width: 760px) and (max-width: 1199px) and (max-height: 540px) and (orientation: landscape) {
+    .atelier-ui {
+        padding-left: calc(76px + env(safe-area-inset-left));
+        padding-right: env(safe-area-inset-right);
+    }
+    .atelier-ui .atelier-nav {
+        left: env(safe-area-inset-left);
+    }
+}
