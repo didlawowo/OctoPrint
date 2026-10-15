@@ -42,7 +42,14 @@ import sys
 
 # Adjust this on every release (candidate) ----------------------------------------------
 
+ATELIER_BRANCH = r"(?:origin/)?(?:main|feat/atelier-(?:2\.0-rc6|v2)|fix/atelier-v2-mobile-overflow)$"
+
 BRANCH_VERSIONS = [
+    {
+        "tag": "2.0.0rc6",
+        "commit": "75fef2506e6f4ce62b4b4e6eb6810ea67833622a",
+        "patterns": [ATELIER_BRANCH],
+    },
     # bugfix is the branch for preparation of the 1.11.x bugfix releases
     # so are any bug/... branches
     {
@@ -225,7 +232,7 @@ def _parse_branch_versions():
             continue
 
         if not isinstance(patterns, list):
-            # invalid entry
+            # invalid pattern
             continue
 
         for pattern in patterns:
@@ -256,7 +263,7 @@ def _get_data_from_git():
 
     sha = _get_long()
     if _verbose:
-        print(f"SHA:      {sha}")  # noqa: E241
+        print(f"SHA:      {sha}")
 
     short = _get_short()
     if _verbose:
@@ -276,7 +283,11 @@ def _get_data_from_git():
 
                 tag = virtual_tag
                 distance = _get_distance(ref_commit)
-                template = "{tag}.dev{distance}+g{short}"
+                template = (
+                    "{tag}+atelier.g{short}"
+                    if re.fullmatch(ATELIER_BRANCH, branch)
+                    else "{tag}.dev{distance}+g{short}"
+                )
                 dirty = ".dirty"
                 break
 
@@ -340,7 +351,7 @@ def _get_data_from_keywords():
 
     tags = {r[5:] for r in refs if r.startswith("tag: ")}
     if not tags:
-        tags = {r for r in refs if re.search(r"\d", r)}
+        tags = {r for r in refs if _validate_version(r)}
     tag = sorted(tags)[0] if tags else None
 
     branches = [
@@ -348,7 +359,10 @@ def _get_data_from_keywords():
         for r in refs
         if not r.startswith("tag: ") and r != "HEAD" and not r.startswith("refs/")
     ]
-    branch = branches[0] if branches else None
+    branch = next(
+        (ref for ref in branches if re.fullmatch(ATELIER_BRANCH, ref)),
+        branches[0] if branches else None,
+    )
 
     virtual_tag = None
     if branch is not None:
@@ -372,7 +386,11 @@ def _get_data_from_keywords():
     if tag is None:
         if virtual_tag is not None:
             tag = virtual_tag
-            template = "{tag}.dev+unknown.g{short}"
+            template = (
+                "{tag}+atelier.g{short}"
+                if re.fullmatch(ATELIER_BRANCH, branch)
+                else "{tag}.dev+unknown.g{short}"
+            )
         else:
             template = FALLBACK_WITH_SHA
     else:

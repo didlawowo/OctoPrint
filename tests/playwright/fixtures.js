@@ -130,18 +130,18 @@ exports.test = base.test.extend({
     ui: async ({page, util, loginApi, baseURL}, use) => {
         const ui = {
             gotoLogin: async () => {
-                await page.goto(baseURL + "/?l10n=en");
+                await page.goto(baseURL + "/?l10n=en&classic=1");
                 await ui.loginHasLoaded();
             },
 
             gotoCore: async () => {
-                await page.goto(baseURL + "/?l10n=en");
+                await page.goto(baseURL + "/?l10n=en&classic=1");
                 await ui.coreHasLoaded();
             },
 
             gotoLoggedInCore: async () => {
                 await loginApi.loginDefault();
-                await page.goto(baseURL + "/?l10n=en");
+                await page.goto(baseURL + "/?l10n=en&classic=1");
                 await ui.coreHasLoaded();
             },
 

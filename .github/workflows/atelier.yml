@@ -1,0 +1,136 @@
+name: Atelier
+
+# This public fork executes project code only after a push by a repository writer
+# or an explicit dispatch. External PR heads must never run on the LAN runner.
+on:
+  push:
+    branches: ["**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: atelier-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  UV_PYTHON: "3.11"
+  PIP_DISABLE_PIP_VERSION_CHECK: "1"
+  PLAYWRIGHT_HTML_OPEN: never
+
+jobs:
+  quality:
+    name: Shared pre-commit contract
+    if: github.repository == 'didlawowo/OctoPrint'
+    runs-on: ${{ vars.RUNNER || 'arc-runner-octoprint' }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.11"
+      - uses: didlawowo/workflow-ci/.github/actions/precommit-contract@b4688812f0262a7cd385f2ae729dca9b2f0e1e85 # v1.18.3
+
+  test:
+    name: Python, JavaScript and distribution
+    if: github.repository == 'didlawowo/OctoPrint'
+    runs-on: ${{ vars.RUNNER || 'arc-runner-octoprint' }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: didlawowo/workflow-ci/.github/actions/setup-node-env@b4688812f0262a7cd385f2ae729dca9b2f0e1e85 # v1.18.3
+        with:
+          node-version: "22"
+          working-directory: tests/playwright
+      # uv sync resolves every supported Python version, including optional docs
+      # dependencies incompatible with Python 3.10. Avoid narrowing OctoPrint's
+      # declared support just to satisfy an isolated CI run on Python 3.11.
+      - name: Prepare isolated Python 3.11 and fork extras with uv pip
+        run: |
+          uv python install 3.11
+          uv venv --no-project --python 3.11 .venv
+          uv pip install --python .venv/bin/python --editable ".[develop]" pytest-cov build pip
+          echo "$GITHUB_WORKSPACE/.venv/bin" >> "$GITHUB_PATH"
+      - name: Core Python suite, doctests and JUnit evidence
+        run: |
+          mkdir -p coverage-reports
+          .venv/bin/python -m pytest \
+            --junitxml=coverage-reports/pytest-report.xml \
+            --cov=octoprint --cov-report=xml:coverage-reports/coverage.xml \
+            --cov-report=term-missing
+      - name: Save test evidence on failure
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: atelier-python-results
+          path: coverage-reports/
+          retention-days: 7
+      - name: Taskfile and hardware-free Pi and dashboard tests
+        run: |
+          .venv/bin/task --list
+          .venv/bin/task pi:test
+      - name: Build translated Python distributions, not an SD image
+        run: |
+          .venv/bin/task babel-compile
+          .venv/bin/task babel-bundle
+          .venv/bin/python -m build --sdist --wheel
+      - name: Save Python distributions
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: atelier-python-dist
+          path: |
+            dist/*.whl
+            dist/*.tar.gz
+          if-no-files-found: error
+          retention-days: 7
+
+  browser:
+    name: Mobile and tablet browser recipe
+    needs: test
+    if: github.repository == 'didlawowo/OctoPrint'
+    runs-on: ${{ vars.RUNNER || 'arc-runner-octoprint' }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Prepare the OctoPrint runtime with uv pip
+        run: |
+          uv python install 3.11
+          uv venv --no-project --python 3.11 .venv
+          uv pip install --python .venv/bin/python --editable ".[develop]" pip
+          echo "$GITHUB_WORKSPACE/.venv/bin" >> "$GITHUB_PATH"
+      - uses: didlawowo/workflow-ci/.github/actions/setup-node-env@b4688812f0262a7cd385f2ae729dca9b2f0e1e85 # v1.18.3
+        with:
+          node-version: "22"
+          working-directory: tests/playwright
+      - name: Install Chromium in the ephemeral runner
+        working-directory: tests/playwright
+        run: npx --no-install playwright install --with-deps chromium
+      - name: Prepare isolated OctoPrint test data
+        run: |
+          test_dir="$(mktemp -d "$RUNNER_TEMP/atelier-e2e.XXXXXX")"
+          cp -a .github/ci/e2econfig/. "$test_dir/"
+          echo "OCTOPRINT_SERVER_BASE=$test_dir" >> "$GITHUB_ENV"
+      - name: Browser recipe, including classic fallback
+        working-directory: tests/playwright
+        env:
+          PLAYWRIGHT_JUNIT_OUTPUT_FILE: test-results/junit.xml
+        run: npx --no-install playwright test specs/atelier.spec.js --project=chromium --workers=1 --reporter=list,html,junit
+      - name: Save browser evidence, including failures
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: atelier-browser-results
+          path: |
+            tests/playwright/playwright-report/
+            tests/playwright/test-results/
+            ${{ runner.temp }}/atelier-e2e.*/logs/octoprint.log
+          retention-days: 7

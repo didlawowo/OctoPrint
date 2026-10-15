@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+stamp=/var/lib/octoprint-atelier/firstboot.done
+[[ -f "$stamp" ]] && exit 0
+
+service=/etc/systemd/system/octoprint.service
+[[ -r "$service" ]] || { echo "OctoPrint service file missing" >&2; exit 1; }
+
+service_user=$(awk -F= '/^User=/{print $2; exit}' "$service")
+[[ -n "$service_user" ]] || service_user=1000
+entry=$(getent passwd "$service_user" || true)
+[[ -n "$entry" ]] || { echo "Cannot resolve OctoPrint service user: $service_user" >&2; exit 1; }
+
+user=$(printf '%s' "$entry" | cut -d: -f1)
+home=$(printf '%s' "$entry" | cut -d: -f6)
+group=$(id -gn "$user")
+
+venv=/opt/octopi/oprint
+[[ -x "$venv/bin/python" ]] || venv=/home/pi/oprint
+[[ -x "$venv/bin/python" ]] || { echo "OctoPrint Python missing" >&2; exit 1; }
+
+install -d -o "$user" -g "$group" -m 0700 "$home/.octoprint"
+
+networks=$("$venv/bin/python" - <<'PY'
+import ipaddress
+import subprocess
+
+try:
+    output = subprocess.check_output(
+        ["ip", "-o", "-4", "addr", "show", "scope", "global"],
+        text=True,
+        stderr=subprocess.DEVNULL,
+    )
+except Exception:
+    output = ""
+
+values = []
+for line in output.splitlines():
+    for field in line.split():
+        if "/" not in field:
+            continue
+        try:
+            network = ipaddress.ip_interface(field).network
+        except ValueError:
+            continue
+        value = str(network)
+        if network.is_private and value not in values:
+            values.append(value)
+print(",".join(values))
+PY
+)
+
+runuser -u "$user" -- "$venv/bin/python" /opt/octopi/atelier/configure-local.py \
+  --basedir "$home/.octoprint" \
+  --preset /opt/octopi/atelier/atelier-local.yaml \
+  --networks "$networks"
+
+install -d -m 0755 /var/lib/octoprint-atelier
+touch "$stamp"

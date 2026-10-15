@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# Executed INSIDE the CustoPiZer image chroot, never on the host.
+set -eo pipefail
+export LC_ALL=C
+source /common.sh
+install_cleanup_trap
+
+venv=/opt/octopi/oprint
+[[ -x "$venv/bin/python" ]] || venv=/home/pi/oprint
+[[ -x "$venv/bin/python" ]] || { echo 'Image incompatible : venv OctoPi absent.' >&2; exit 1; }
+owner=$(stat -c '%U' "$venv")
+[[ "$owner" != "UNKNOWN" ]] || owner=pi
+"$venv/bin/python" -c 'import sys; assert sys.version_info >= (3, 10), "OctoPrint requiert Python >= 3.10"'
+work=$(mktemp -d /tmp/atelier-build.XXXXXX)
+tar -xf /files/source.tar -C "$work"
+chown -R pi:pi "$work"
+source_dir="$work/source"
+
+# The fork's French catalogue must be in the installed package, not only in translations/.
+sudo -u "$owner" "$venv/bin/pybabel" compile -d "$source_dir/translations" -l fr
+mkdir -p "$source_dir/src/octoprint/translations/fr"
+cp -a "$source_dir/translations/fr/." "$source_dir/src/octoprint/translations/fr/"
+chown -R pi:pi "$work"
+sudo -u "$owner" "$venv/bin/python" -m pip install --no-cache-dir --upgrade "$source_dir"
+
+# First-boot provisioning runs after Raspberry Pi Imager has applied the final
+# UID 1000 username/home. No shared password or account is baked into the image.
+install -d -m 0755 /opt/octopi/atelier
+install -m 0755 "$source_dir/tools/configure-local.py" /opt/octopi/atelier/configure-local.py
+install -m 0644 "$source_dir/configs/atelier-local.yaml" /opt/octopi/atelier/atelier-local.yaml
+install -m 0755 "$source_dir/tools/pi/atelier-firstboot" /usr/local/sbin/atelier-firstboot
+install -m 0644 "$source_dir/tools/pi/atelier-firstboot.service" /etc/systemd/system/atelier-firstboot.service
+install -d -m 0755 /etc/systemd/system/octoprint.service.d
+cat >/etc/systemd/system/octoprint.service.d/atelier-firstboot.conf <<'EOF'
+[Unit]
+Requires=atelier-firstboot.service
+After=atelier-firstboot.service
+EOF
+
+sudo -u "$owner" "$venv/bin/python" - <<'PYCHECK'
+from importlib.resources import files
+import octoprint
+root = files('octoprint')
+for name in ('plugins/atelier/static/js/atelier.js',
+             'plugins/atelier/static/css/atelier.css',
+             'plugins/atelier/templates/atelier_tab.jinja2',
+             'translations/fr/LC_MESSAGES/messages.mo'):
+    assert root.joinpath(name).is_file(), 'Fichier absent du package : ' + name
+print('Fork installé :', octoprint.__version__)
+PYCHECK
+"$venv/bin/python" -m pip check
+rm -rf -- "$work"
