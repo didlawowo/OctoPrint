@@ -687,3 +687,145 @@
         padding: 8px 3px;
     }
 }
+
+/* Tablet portrait and phone landscape: make room for native panels. A compact
+   navigation rail beats a 190px desktop sidebar on an 800px CSS viewport. */
+@media (min-width: 760px) and (max-width: 1199px) {
+    .atelier-ui {
+        padding-left: 76px;
+        max-width: 100%;
+        min-width: 0;
+    }
+    .atelier-ui .atelier-nav {
+        width: 76px;
+        min-width: 76px;
+        padding: 12px 6px;
+        gap: 6px;
+        box-sizing: border-box;
+    }
+    .atelier-ui .atelier-nav > button {
+        flex-direction: column;
+        justify-content: center;
+        gap: 5px;
+        min-height: 62px;
+        padding: 6px 2px;
+        font-size: 10px;
+        line-height: 1.1;
+    }
+    .atelier-ui .atelier-nav > button > i {
+        font-size: 20px;
+    }
+    .atelier-ui .atelier-nav-brand,
+    .atelier-ui .atelier-nav-footer {
+        display: none;
+    }
+    .atelier-ui .octoprint-container {
+        min-width: 0;
+        max-width: 100%;
+        padding: 14px;
+    }
+    .atelier-ui .octoprint-container > .row > .tabbable,
+    .atelier-ui #tabs_content,
+    .atelier-ui #control {
+        min-width: 0;
+        max-width: 100%;
+    }
+}
+@media (min-width: 1000px) and (max-width: 1199px) {
+    .atelier-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .atelier-job,
+    .atelier-temperatures,
+    .atelier-camera,
+    .atelier-recent,
+    .atelier-quick {
+        grid-column: auto;
+        grid-row: auto;
+    }
+}
+/* Even with a tablet's wider viewport, third-party webcam elements must not
+   grow the native controls beyond their available column width. */
+@media (min-width: 760px) and (max-width: 1199px) {
+    .atelier-ui #control #webcam_plugins_container,
+    .atelier-ui #control #webcam-group,
+    .atelier-ui #control #webcam-group > .tab-pane {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+    .atelier-ui #control #webcam_plugins_container {
+        aspect-ratio: 16 / 9;
+        min-height: 0;
+        max-height: min(54dvh, 440px);
+        overflow: hidden;
+    }
+    .atelier-ui #control #webcam_plugins_container img,
+    .atelier-ui #control #webcam_plugins_container video,
+    .atelier-ui #control #webcam_plugins_container iframe {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    }
+    .atelier-ui #control > .jog-panel {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        min-width: 0;
+        width: 100%;
+        overflow: visible;
+    }
+    .atelier-ui #control #control-jog-xy,
+    .atelier-ui #control #control-jog-z,
+    .atelier-ui #control #control-jog-extrusion,
+    .atelier-ui #control #control-jog-general {
+        float: none;
+        min-width: 0;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+    .atelier-ui #navbar .nav > li > .dropdown-menu {
+        max-width: min(340px, calc(100vw - 110px));
+    }
+}
+@media (min-width: 760px) and (max-width: 999px) {
+    .atelier-ui #navbar .container {
+        width: 100%;
+        flex-wrap: nowrap;
+        gap: 4px;
+    }
+    .atelier-ui #navbar .brand {
+        max-width: 150px;
+        font-size: 19px;
+        white-space: nowrap;
+    }
+    .atelier-ui #navbar .nav-collapse {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+    .atelier-ui #navbar .nav {
+        justify-content: flex-end;
+        flex-wrap: nowrap;
+    }
+}
+@media (min-width: 760px) and (max-height: 540px) and (orientation: landscape) {
+    .atelier-ui .atelier-nav {
+        padding: 5px;
+        gap: 2px;
+        justify-content: center;
+    }
+    .atelier-ui .atelier-nav > button {
+        min-height: 42px;
+        gap: 2px;
+        padding: 3px 2px;
+    }
+    .atelier-ui .atelier-nav > button > i {
+        font-size: 16px;
+    }
+    .atelier-ui .atelier-nav-brand,
+    .atelier-ui .atelier-nav-footer {
+        display: none;
+    }
+    .atelier-ui #control #webcam_plugins_container {
+        max-height: 50dvh;
+    }
+}
