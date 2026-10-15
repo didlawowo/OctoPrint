@@ -4,7 +4,7 @@ Sur macOS ou Linux, installer **uv** et **Go Task v3**. Sur macOS, uv peut être
 installé avec `brew install uv`. Pas besoin de pipx, d'un Python Homebrew 3.11
 fonctionnel ou d'activer manuellement un environnement.
 
-Dans le clone, sur `feat/atelier-mobile-tablet` :
+Dans le clone, sur `main` :
 
 ```sh
 task init-dev
@@ -27,7 +27,7 @@ l'environnement et installe les dépendances de fonctionnement, compile/intègre
 les traductions et lance le binaire `.venv/bin/octoprint`. Il n'installe pas les
 hooks de développement. Les étapes sont séquentielles et s'arrêtent à la première
 erreur. Aucun `source .venv/bin/activate` ou export de version n'est nécessaire.
-Les deux branches du fork sont reconnues par le calcul de version.
+La branche canonique `main` est reconnue par le calcul de version du fork.
 
 ## Réparer un environnement partiellement créé
 
