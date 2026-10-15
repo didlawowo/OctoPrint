@@ -42,7 +42,7 @@ import sys
 
 # Adjust this on every release (candidate) ----------------------------------------------
 
-ATELIER_BRANCH = r"(?:origin/)?(?:feat/atelier-(?:2\.0-rc6|v2)|fix/atelier-v2-mobile-overflow)$"
+ATELIER_BRANCH = r"(?:origin/)?(?:main|feat/atelier-(?:2\.0-rc6|v2)|fix/atelier-v2-mobile-overflow)$"
 
 BRANCH_VERSIONS = [
     {
